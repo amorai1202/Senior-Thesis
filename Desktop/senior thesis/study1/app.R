@@ -186,18 +186,28 @@ clean_csv <- function(file_path) {
 }
 
 # Run function
-cleaned_prolific <- clean_csv("raw_prolific.csv")
-cleaned_cmu <- clean_csv("raw_cmu.csv")
+cleaned_prolific <- clean_csv("data/raw_prolific.csv")
+cleaned_cmu <- clean_csv("data/raw_cmu.csv")
 cleaned_combined <- bind_rows(cleaned_prolific, cleaned_cmu)
+
+#Split dataset into low/high centrality (if less than 3.3, then low)
+# median/mean = 3.3
+cleaned_combined$Centrality_F <- ifelse(cleaned_combined$Centrality < 3.3, "Low", "High")
+
+# Standardize scores
+cleaned_combined$z_Score <- 
+  (cleaned_combined$Score - mean(cleaned_combined$Score, na.rm = TRUE)) / sd(cleaned_combined$Score, na.rm = TRUE)
 
 # write.csv(df_prolific,"cleaned_prolific.csv", row.names = FALSE)
 # write.csv(df_cmu,"cleaned_cmu.csv", row.names = FALSE)
 # write.csv(df_combined,"cleaned_combined.csv", row.names = FALSE)
 
+
+
 # UI ----------------------------------------------------------------------
 
 ui <- fluidPage(
-  titlePanel("Study 1 EDA (as of 12/17)"),
+  titlePanel("Study 1 EDA (as of 1/5/24)"),
   
   sidebarLayout(
     sidebarPanel(
@@ -344,12 +354,15 @@ server <- function(input, output, session) {
                             "Centrality",
                             "STAI_pre",
                             "STAI_post",
+                            "Pressure",
+                            "RIT",
                             "Age",
                             "Gender",
                             "HighestDegree", 
                             "FirstGen", "FirstGen_US",
                             "X1st_immigrant", "X2nd_immigrant", 
-                            "CurrentMajor"), selected = "Condition")
+                            "CurrentMajor",
+                            "Centrality_F"), selected = "Condition")
   })
   
   # Display counts table for Condition variable
@@ -387,6 +400,7 @@ server <- function(input, output, session) {
                             "AGQ_avoidance",
                             "Belonging",
                             "Centrality",
+                            "Centrality_F",
                             "STAI_pre",
                             "STAI_post",
                             "Age",
@@ -399,7 +413,7 @@ server <- function(input, output, session) {
   
   output$facet <- renderUI({
     choices <- c("None", c("Condition", "Gender", "HighestDegree", "FirstGen", "FirstGen_US",
-                           "X1st_immigrant", "X2nd_immigrant", "CurrentMajor"))
+                           "X1st_immigrant", "X2nd_immigrant", "CurrentMajor", "Centrality_F"))
     selectInput("facetCol", "Group", choices, selected = "None")
   })
   

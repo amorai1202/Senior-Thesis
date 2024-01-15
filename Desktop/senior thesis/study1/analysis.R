@@ -182,24 +182,92 @@ clean_csv <- function(file_path) {
 }
 
 # Run function
-cleaned_prolific <- clean_csv("raw_prolific.csv")
-cleaned_cmu <- clean_csv("raw_cmu.csv")
+cleaned_prolific <- clean_csv("data/raw_prolific.csv")
+cleaned_cmu <- clean_csv("data/raw_cmu.csv")
+# Add dataset labels
+cleaned_prolific$Dataset <- "Prolific"
+cleaned_cmu$Dataset <- "CMU"
 cleaned_combined <- bind_rows(cleaned_prolific, cleaned_cmu)
   
 # write.csv(df_prolific,"cleaned_prolific.csv", row.names = FALSE)
 # write.csv(df_cmu,"cleaned_cmu.csv", row.names = FALSE)
 # write.csv(df_combined,"cleaned_combined.csv", row.names = FALSE)
 
+# Comparing datasets ------------------------------------------------------
+
+# Checking if AGQ means from the samples are statistically different - NO
+t.test(cleaned_prolific$Score, cleaned_cmu$Score) 
+
+# Demographic distributions
+
+prop.table(table(cleaned_prolific$Gender)) #47% W, 51% M
+# More women in CMU dataset
+prop.table(table(cleaned_cmu$Gender)) #60% W, 37% M
+t.test(cleaned_prolific$Age, cleaned_cmu$Age) # 24 years old vs 20 years old
+prop.table(table(cleaned_prolific$CurrentMajor)) #56% STEM
+prop.table(table(cleaned_cmu$CurrentMajor)) #33% STEM
+prop.table(table(cleaned_prolific$StudentStatus)) #75% UG
+prop.table(table(cleaned_cmu$StudentStatus)) #98% UG
+prop.table(table(cleaned_prolific$FirstGen)) #75% UG
+prop.table(table(cleaned_cmu$FirstGen)) #98% UG
+
+# DV's
+ggplot(data = cleaned_combined, aes(x = Centrality, fill = Dataset)) +
+  geom_density(position = "dodge") +
+  theme_bw()
+t.test(cleaned_prolific$Centrality, cleaned_cmu$Centrality)  # Significantly lower centrality in CMU dataset
+t.test(cleaned_prolific$AGQ_approach, cleaned_cmu$AGQ_approach) 
+t.test(cleaned_prolific$AGQ_avoidance, cleaned_cmu$AGQ_avoidance) 
+t.test(cleaned_prolific$RIT, cleaned_cmu$RIT) #Significantly lower RIT for CMU
+t.test(cleaned_prolific$Belonging, cleaned_cmu$Belonging) 
+
+# Final combined dataset --------------------------------------------------
+
+# only asian, remove outliers (z <= -3)
+
+#Split dataset into low/high centrality (if less than 3.3, then low)
+# median/mean = 3.3
+
+cleaned_combined$Centrality_F <- ifelse (cleaned_combined$Centrality < 3.3, "Low", "High")
+cleaned_cmu$Centrality_F <- ifelse (cleaned_cmu$Centrality < 3.3, "Low", "High")
+cleaned_prolific$Centrality_F <- ifelse (cleaned_prolific$Centrality < 3.3, "Low", "High")
+
+# Manipulation check
+
+cleaned_combined <- cleaned_combined %>% 
+                      filter(!((mc_task != "1" &
+                                    mc_mathability != "1" &
+                                    mc_diagnostic != "1")))    
+
+# Asian only
+cleaned_combined <- cleaned_combined %>%
+  filter(str_detect(Race, "2"))
+
+# Standardize scores
+cleaned_combined$z_Score <- 
+  (cleaned_combined$Score - mean(cleaned_combined$Score, na.rm = TRUE)) / sd(cleaned_combined$Score, na.rm = TRUE)
+
+ggplot(data = cleaned_combined, aes(x = z_Score)) +
+  geom_density() +
+  theme_bw()
+
+# None Z <= -3
+#sort(cleaned_combined$z_Score)
+
+sort(cleaned_combined$Score)
+
+#Final sample size = 264
+table(cleaned_combined$Condition)
+# write.csv(df_combined,"cleaned_combined.csv", row.names = FALSE)
 
 # Analysis ------------------------------------------------------------------
-
-# Checking if AGQ means from the samples are statistically different
-t.test(cleaned_prolific$Score, cleaned_cmu$Score) 
 
 # Primary ANOVA (condition x score)
 summary(aov(Score ~ Condition, data = cleaned_combined))
 # fail to reject = insufficient evidence to conclude that there are significant differences in means between the groups. 
 # not enough evidence to suggest that at least one group mean is different from the others
+
+summary(aov(Score ~ Condition, data = cleaned_cmu))
 
 # Gender Differences
 summary(aov(Score ~ Gender, data = cleaned_combined))
@@ -207,6 +275,12 @@ summary(aov(Pre_Expectation ~ Gender, data = cleaned_combined))
 summary(aov(Post_Expectation ~ Gender, data = cleaned_combined))
 summary(aov(AGQ_approach ~ Gender, data = cleaned_combined))
 summary(aov(AGQ_avoidance ~ Gender, data = cleaned_combined))
+
+# Do the effects of the manipulations look different for women and men? No
+W_only <- subset(cleaned_combined, cleaned_combined$Gender == "Woman")
+M_only <- subset(cleaned_combined, cleaned_combined$Gender == "Man")
+summary(aov(Score ~ Condition, data = M_only))
+
 
 # AGQ as a mediator
 # Does the condition lead to AGQ differences? No
@@ -217,6 +291,78 @@ summary(lm(Score ~ AGQ_approach, data = cleaned_combined))
 summary(lm(Score ~ AGQ_avoidance, data = cleaned_combined))
 
 # Centrality interaction
-summary(lm(Score ~ Centrality*Condition, data = cleaned_combined))
+centrality_mod <- aov(Score ~ Condition, data = low_Centrality)
+summary(centrality_mod)
+plot(fitted(centrality_mod))
+
+###  --- check differences for low vs high centrality samples separately -- ###
+
+low_Centrality_p <- subset(cleaned_prolific, cleaned_prolific$Centrality_F == "Low")
+high_Centrality_p <-subset(cleaned_prolific, cleaned_prolific$Centrality_F == "High")
+centrality_mod_p <- aov(Score ~ Condition, data = high_Centrality_p)
+summary(centrality_mod_p)
+
+ggplot(data = low_Centrality_p, aes(x = Condition, y = Score, fill = Centrality_F)) +
+  geom_boxplot() +
+  theme_bw()
+
+ggplot(data = low_Centrality_cmu, aes(x = Condition, y = Score, fill = Centrality_F)) +
+  geom_boxplot() +
+  theme_bw()
+
+low_Centrality_cmu <- subset(cleaned_cmu, cleaned_cmu$Centrality_F == "Low")
+high_Centrality_cmu <-subset(cleaned_cmu, cleaned_cmu$Centrality_F == "High")
+centrality_mod_cmu <- aov(Score ~ Condition, data = high_Centrality_cmu)
+summary(centrality_mod_cmu)
+
+
+#the relationship between Condition x Score depends on Centrality
+# for each additional increase in centrality, the avg score in blatant is predicted to decrease compared than control
+
+
+# Regression --------------------------------------------------------------
+
+summary(lm(Score ~ Condition + Centrality + Condition:Centrality + Condition*Gender, data = cleaned_combined))
+summary(lm(Score ~ Condition + Gender + Condition:Gender, data = cleaned_combined))
+
+summary(lm(Score ~ Condition + AGQ_approach + AGQ_avoidance + Gender + Centrality*Condition +
+             RIT + FirstGen + Age + CurrentMajor, data = cleaned_combined))
+
+summary(lm(Score ~ Condition + Age + CurrentMajor + Centrality*Condition
+           + Gender, data = cleaned_combined))
+
+# Racial Identity (Centrality) --------------------------------------------
+
+ggplot(data = cleaned_combined, aes(x = Centrality, fill = Dataset)) +
+  geom_density(position = "dodge") +
+  theme_bw()
+
+low_Centrality <- subset(cleaned_combined, cleaned_combined$Centrality_F == "Low")
+high_Centrality <-subset(cleaned_combined, cleaned_combined$Centrality_F == "High")
+
+t.test(low_Centrality$Score, high_Centrality$Score) 
+
+ggplot(data = cleaned_combined, aes(x = Condition, y = Score, fill = Centrality_F)) +
+  geom_boxplot() +
+  theme_bw()
+
+ggplot(data = cleaned_combined, aes(x = Condition, y = AGQ_approach, fill = Centrality_F)) +
+  geom_boxplot() +
+  theme_bw()
+# Low centrality folks are significantly less likely to adopt an approach mindset
+t.test(low_Centrality$AGQ_approach, high_Centrality$AGQ_approach) 
+
+ggplot(data = cleaned_combined, aes(x = Condition, y = AGQ_avoidance, fill = Centrality_F)) +
+  geom_boxplot() +
+  theme_bw()
+
+# But not significantly more likely to adopt an avoidance
+t.test(low_Centrality$AGQ_avoidance, high_Centrality$AGQ_avoidance) 
+
+
+
+
+
+
 
 

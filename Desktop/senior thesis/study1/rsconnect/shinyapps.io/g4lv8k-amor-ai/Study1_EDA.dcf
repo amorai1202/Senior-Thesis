@@ -5,9 +5,9 @@ account: g4lv8k-amor-ai
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 10815564
-bundleId: 8059149
+bundleId: 8146947
 url: https://g4lv8k-amor-ai.shinyapps.io/Study1_EDA/
 version: 1
 asMultiple: FALSE
 asStatic: FALSE
-ignoredFiles: 1a_cmu.R|1a_poweranalysis.R|1a_prolific.R|analysis.R|init_cmu.csv|init_pilot.csv|init_prolific.csv
+ignoredFiles: 1a_cmu.R|1a_poweranalysis.R|1a_prolific.R|analysis.R|data/init_cmu.csv|data/init_pilot.csv|data/init_prolific.csv
