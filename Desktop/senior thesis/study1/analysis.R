@@ -247,9 +247,14 @@ cleaned_combined <- cleaned_combined %>%
 cleaned_combined$z_Score <- 
   (cleaned_combined$Score - mean(cleaned_combined$Score, na.rm = TRUE)) / sd(cleaned_combined$Score, na.rm = TRUE)
 
-ggplot(data = cleaned_combined, aes(x = z_Score)) +
+ggplot(data = cleaned_combined, aes(x = Score)) +
   geom_density() +
-  theme_bw()
+  labs(title = "Distribution of Performance") +
+  theme_bw() +
+  # Add vertical line for mean
+  geom_vline(aes(xintercept = mean(Score)), color = "red", linetype = "dashed", size = 1) +
+  # Annotate with numeric mean value
+  annotate("text", x = mean(cleaned_combined$Score), y = 0.03, label = paste("Mean =", round(mean(cleaned_combined$Score), 2)), vjust = 1.5, color = "red")
 
 # None Z <= -3
 #sort(cleaned_combined$z_Score)
@@ -291,15 +296,45 @@ summary(lm(Score ~ AGQ_approach, data = cleaned_combined))
 summary(lm(Score ~ AGQ_avoidance, data = cleaned_combined))
 
 # Centrality interaction
-centrality_mod <- aov(Score ~ Condition, data = low_Centrality)
+centrality_mod <- aov(Score ~ Condition, data = cleaned_combined)
 summary(centrality_mod)
 plot(fitted(centrality_mod))
 
+
 ###  --- check differences for low vs high centrality samples separately -- ###
 
+#Combined
+
+low_Centrality <- subset(cleaned_combined, cleaned_combined$Centrality_F == "Low")
+high_Centrality <-subset(cleaned_combined, cleaned_combined$Centrality_F == "High")
+centrality_mod <- aov(Score ~ Condition, data = low_Centrality)
+summary(centrality_mod)
+
+low_subtle <- subset(low_Centrality, low_Centrality$Condition == "Subtle")
+low_blatant <- subset(low_Centrality, low_Centrality$Condition == "Blatant")
+low_control <- subset(low_Centrality, low_Centrality$Condition == "Control")
+  
+t.test(low_subtle$Score, low_blatant$Score) 
+t.test(low_subtle$Score, low_control$Score)
+t.test(low_blatant$Score, low_control$Score)
+
+ggplot(data = low_Centrality, aes(x = Condition, y = Score, fill = Centrality_F)) +
+  geom_boxplot() +
+  theme_bw()
+
+ggplot(data = low_Centrality, aes(x = Condition, y = AGQ_avoidance, fill = Centrality_F)) +
+  geom_boxplot() +
+  theme_bw()
+
+ggplot(data = low_Centrality, aes(x = Condition, y = AGQ_avoidance, fill = Centrality_F)) +
+  geom_boxplot() +
+  theme_bw()
+
+
+#Prolific
 low_Centrality_p <- subset(cleaned_prolific, cleaned_prolific$Centrality_F == "Low")
 high_Centrality_p <-subset(cleaned_prolific, cleaned_prolific$Centrality_F == "High")
-centrality_mod_p <- aov(Score ~ Condition, data = high_Centrality_p)
+centrality_mod_p <- aov(Score ~ Condition, data = low_Centrality_p)
 summary(centrality_mod_p)
 
 ggplot(data = low_Centrality_p, aes(x = Condition, y = Score, fill = Centrality_F)) +
@@ -310,9 +345,10 @@ ggplot(data = low_Centrality_cmu, aes(x = Condition, y = Score, fill = Centralit
   geom_boxplot() +
   theme_bw()
 
+#CMU
 low_Centrality_cmu <- subset(cleaned_cmu, cleaned_cmu$Centrality_F == "Low")
 high_Centrality_cmu <-subset(cleaned_cmu, cleaned_cmu$Centrality_F == "High")
-centrality_mod_cmu <- aov(Score ~ Condition, data = high_Centrality_cmu)
+centrality_mod_cmu <- aov(Score ~ Condition, data = low_Centrality_cmu)
 summary(centrality_mod_cmu)
 
 
@@ -330,6 +366,57 @@ summary(lm(Score ~ Condition + AGQ_approach + AGQ_avoidance + Gender + Centralit
 
 summary(lm(Score ~ Condition + Age + CurrentMajor + Centrality*Condition
            + Gender, data = cleaned_combined))
+
+
+# Gender ------------------------------------------------------------------
+
+#--- Plot score by gender
+cleaned_combined %>% ggplot(aes(x = Score, fill = Gender)) + 
+  geom_histogram(bins = 50)
+# Significant gender difference
+summary(aov(Score ~ Gender, data = cleaned_combined))
+summary(aov(Score ~ Condition * Gender, data = cleaned_combined))
+
+
+women_only <- subset(cleaned_combined, cleaned_combined$Gender == "Woman")
+
+ggplot(data = women_only, aes(x = Condition, y = Score)) +
+  geom_boxplot() +
+  theme_bw()
+
+#Main Effect
+summary(aov(Score ~ Condition, data = women_only))
+#Other DV's
+summary(aov(Pre_Expectation ~ Condition, data = women_only))
+summary(aov(Post_Expectation ~ Condition, data = women_only))
+summary(aov(STAI_pre ~ Condition, data = women_only))
+summary(aov(STAI_post ~ Condition, data = women_only))
+summary(aov(AGQ_approach ~ Condition, data = women_only))
+summary(aov(AGQ_avoidance ~ Condition, data = women_only))
+###
+summary(aov(RIT ~ Condition, data = women_only))
+###
+ggplot(data = women_only, aes(x = Condition, y = STAI_pre)) +
+  geom_boxplot() +
+  theme_bw()
+###
+summary(aov(Belonging ~ Condition, data = women_only))
+
+# AGQ as a mediator
+summary(lm(Score ~ AGQ_approach, data = women_only))
+summary(lm(Score ~ AGQ_avoidance, data = women_only))
+
+# T-Tests
+
+c_women <- subset(women_only, women_only$Condition == "Control")
+s_women <- subset(women_only, women_only$Condition == "Subtle")
+b_women <- subset(women_only, women_only$Condition == "Blatant")
+
+t.test(c_women$RIT, s_women$RIT) #signifiant
+t.test(c_women$RIT, b_women$RIT) #signifiant
+t.test(s_women$RIT, b_women$RIT)
+
+
 
 # Racial Identity (Centrality) --------------------------------------------
 
@@ -359,10 +446,31 @@ ggplot(data = cleaned_combined, aes(x = Condition, y = AGQ_avoidance, fill = Cen
 # But not significantly more likely to adopt an avoidance
 t.test(low_Centrality$AGQ_avoidance, high_Centrality$AGQ_avoidance) 
 
+# T-tests
+low_control <- 
+low_subtle <- 
+low_blatant
+  
 
 
+# ANOVA -------------------------------------------------------------------
+
+summary(aov(Score ~ Condition, data = cleaned_combined))
+summary(aov(Pre_Expectation ~ Condition, data = cleaned_combined))
+summary(aov(Post_Expectation ~ Condition, data = cleaned_combined))
+summary(aov(STAI_pre ~ Condition, data = cleaned_combined))
+summary(aov(STAI_post ~ Condition, data = cleaned_combined))
+summary(aov(AGQ_approach ~ Condition, data = cleaned_combined))
+summary(aov(AGQ_avoidance ~ Condition, data = cleaned_combined))
+summary(aov(RIT ~ Condition, data = cleaned_combined))
+summary(aov(Belonging ~ Condition, data = cleaned_combined))
 
 
+summary(lm(Score ~ AGQ_approach, data = cleaned_combined))
+summary(lm(Score ~ AGQ_avoidance, data = cleaned_combined))
+summary(lm(STAI_post ~ AGQ_avoidance, data = cleaned_combined))
+
+summary(lm(Score ~ Condition*Centrality + Gender, data = cleaned_combined))
 
 
 
