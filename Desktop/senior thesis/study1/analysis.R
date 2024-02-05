@@ -377,6 +377,24 @@ cleaned_combined %>% ggplot(aes(x = Score, fill = Gender)) +
 summary(aov(Score ~ Gender, data = cleaned_combined))
 summary(aov(Score ~ Condition * Gender, data = cleaned_combined))
 
+#####
+#Check datasets separately
+
+prolific_women <- subset(cleaned_prolific, cleaned_prolific$Gender == "Woman")
+ggplot(data = prolific_women, aes(x = Condition, y = Score)) +
+  geom_boxplot() +
+  theme_bw()
+summary(aov(Score ~ Condition, data = prolific_women))
+summary(aov(Pre_Expectation ~ Condition, data = prolific_women))
+summary(aov(Post_Expectation ~ Condition, data = prolific_women))
+summary(aov(STAI_pre ~ Condition, data = prolific_women))
+summary(aov(STAI_post ~ Condition, data = prolific_women))
+summary(aov(AGQ_approach ~ Condition, data = prolific_women))
+summary(aov(AGQ_avoidance ~ Condition, data = prolific_women))
+summary(aov(RIT ~ Condition, data = prolific_women))
+summary(aov(Belonging ~ Condition, data = prolific_women))
+
+#####
 
 women_only <- subset(cleaned_combined, cleaned_combined$Gender == "Woman")
 
@@ -464,13 +482,99 @@ summary(aov(AGQ_approach ~ Condition, data = cleaned_combined))
 summary(aov(AGQ_avoidance ~ Condition, data = cleaned_combined))
 summary(aov(RIT ~ Condition, data = cleaned_combined))
 summary(aov(Belonging ~ Condition, data = cleaned_combined))
-
-
 summary(lm(Score ~ AGQ_approach, data = cleaned_combined))
 summary(lm(Score ~ AGQ_avoidance, data = cleaned_combined))
 summary(lm(STAI_post ~ AGQ_avoidance, data = cleaned_combined))
-
 summary(lm(Score ~ Condition*Centrality + Gender, data = cleaned_combined))
 
+
+
+# Centrality (sd split) --------------------------------------------------------------
+
+mean_centrality <- mean(cleaned_combined$Centrality)
+sd_centrality <- sd(cleaned_combined$Centrality)
+
+# Add a new column indicating HighCentrality or LowCentrality
+cleaned_combined$CentralityCategory <- ifelse(cleaned_combined$Centrality < (mean_centrality - sd_centrality), "LowCentrality",
+                                              ifelse(cleaned_combined$Centrality > (mean_centrality + sd_centrality), "HighCentrality", NA))
+
+centrality_only <- cleaned_combined[complete.cases(cleaned_combined$CentralityCategory), ]
+#125/264
+
+lowC <- subset(centrality_only, cleaned_combined$Centrality_F == "Low")
+summary(aov(Score ~ Condition, data = lowC))
+
+ggplot(data = lowC, aes(x = Condition, y = Score, fill = Centrality_F)) +
+  geom_boxplot() +
+  theme_bw()
+
+highC <-subset(centrality_only, cleaned_combined$Centrality_F == "High")
+summary(aov(Score ~ Condition, data = highC))
+
+
+# Goal Orientation (sd split) ---------------------------------------------
+
+AGQ_data<- cleaned_combined %>%
+  select(Approach = AGQ_approach, Avoidance = AGQ_avoidance)
+rquery.cormat(AGQ_data)
+
+
+mean_approach <- mean(cleaned_combined$AGQ_approach)
+sd_approach <- sd(cleaned_combined$AGQ_approach)
+mean_avoidance<- mean(cleaned_combined$AGQ_avoidance)
+sd_avoidance <- sd(cleaned_combined$AGQ_avoidance)
+
+cleaned_combined$ApproachAvoidanceCategory <- ifelse(cleaned_combined$AGQ_approach > (mean_approach + sd_approach), "HighApproach",
+                                                     ifelse(cleaned_combined$AGQ_avoidance > (mean_avoidance + sd_avoidance), "HighAvoidance", "NotHigh"))
+
+AGQ_only <- filtered_dataset <- cleaned_combined[cleaned_combined$ApproachAvoidanceCategory %in% c("HighApproach", "HighAvoidance"), ]
+#85/264
+
+highApproach <- subset(AGQ_only, AGQ_only$ApproachAvoidanceCategory == "HighApproach")
+summary(aov(Score ~ Condition, data = highApproach))
+
+highAvoidance <-subset(AGQ_only, AGQ_only$ApproachAvoidanceCategory == "HighAvoidance")
+summary(aov(Score ~ Condition, data = highAvoidance))
+
+
+# Stereotype Endorsement --------------------------------------------------
+
+blatant_only <- subset(cleaned_combined, cleaned_combined$Condition == "Blatant")
+#Fix recoding error
+blatant_only <- blatant_only %>%
+  mutate_at(vars(starts_with("Blatant_")), ~ ifelse(. == 17, 5, .))
+
+avg_blatant <- blatant_only %>%
+  # calculate row means and round to 3 decimal places
+  mutate(Common_avg = round(mean(c_across(29:34), na.rm = TRUE), 3),
+         True_avg = round(mean(c_across(35:40), na.rm = TRUE), 3))
+
+ggplot(data = avg_blatant, aes(x = Common_avg)) +
+  geom_density() +
+  theme_bw()
+
+ggplot(data = avg_blatant, aes(x = True_avg)) +
+  geom_density() +
+  theme_bw()
+
+summary(lm(Score ~ Common_avg, data = avg_blatant))
+summary(lm(Score ~ True_avg, data = avg_blatant))
+summary(lm(AGQ_avoidance ~ Common_avg, data = avg_blatant))
+summary(lm(AGQ_approach ~ True_avg, data = avg_blatant))
+
+
+endorse_data <- avg_blatant %>%
+  select(True = True_avg, Common = Common_avg, RIT = RIT, Centrality = Centrality,
+         Approach = AGQ_approach, Avoidance = AGQ_avoidance)
+rquery.cormat(endorse_data)
+
+
+
+# Correlations ------------------------------------------------------------
+
+correlations_data <- cleaned_combined %>%
+  select(RIT = RIT, Centrality = Centrality,
+         Approach = AGQ_approach, Avoidance = AGQ_avoidance)
+rquery.cormat(correlations_data)
 
 
