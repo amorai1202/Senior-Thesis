@@ -12,7 +12,7 @@ raw_prescreen <- read_csv("raw_prescreen.csv")
 #colnames(raw_prescreen)
 
 filter_df <- raw_prescreen |> 
-  select(23,5,24,26:30,32:66)
+  dplyr::select(23,5,24,26:30,32:66)
 
 clean_prescreen <- 
         filter_df |> 
@@ -107,6 +107,8 @@ prescreen_avg <- prescreen_df |>
                            Racial_ID = round(mean(c_across(38:40), na.rm = TRUE), 3),
                            Gender_ID = round(mean(c_across(41:43), na.rm = TRUE), 3)
                            )
+
+#write.csv(prescreen_avg,"cleaned_prescreen.csv", row.names = FALSE)
 
 # Distributions -----------------------------------------------------------
 
