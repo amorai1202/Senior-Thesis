@@ -89,6 +89,11 @@ summary(aov(Score ~ Condition, data = full_data))
     geom_boxplot() +
     theme_minimal()
   
+# Pairwise comparisons  
+primary_test <- aov(Score ~ Condition, data = full_data)
+primary_Tukey <- TukeyHSD(x=primary_test, conf.level=0.95) 
+  plot(primary_Tukey, las=1, asp = 0.5, cex.axis = 0.5) 
+  
 # Secondary ANOVA (condition x DVs)
 summary(aov(AGQ_approach ~ Condition, data = full_data))
 summary(aov(AGQ_avoidance ~ Condition, data = full_data))
