@@ -7,7 +7,7 @@ library(data.table)
 
 # Clean data --------------------------------------------------------------
 
-raw_prescreen <- read_csv("raw_prescreen.csv")
+raw_prescreen <- read_csv("data/raw_prescreen.csv")
 #View(raw_prescreen)
 #colnames(raw_prescreen)
 

@@ -7,31 +7,47 @@ library(data.table)
 
 # Load data ---------------------------------------------------------------
 
-data <- read_csv("init_study1.csv")
-prescreen_df <- read_csv("cleaned_prescreen.csv")
+prescreen_df <- read_csv("data/cleaned_prescreen.csv")
+all_data <- read_csv("data/data_0326.csv")
 
-# First check if same people doing both parts
+# Extract IDs from either column
+all_data <- all_data |> 
+  mutate(ProlificID = coalesce(ProlificID, PROLIFIC_PID))
 
+# Filter data -------------------------------------------------------------
+
+# Filter out incomplete surveys + those that don't want their data included
+filter_data <- all_data |> 
+        filter(Finished == "1" & 
+                 # Include data 
+                 debrief_include_data == "1") 
+
+print(paste("Number of participants BEFORE MC:", nrow(filter_data)))
+
+# Manipulation check
+data <- filter_data |>  
+  filter(!((mc_task != "1" &
+              mc_mathability != "1" &
+              mc_diagnostic != "1")))   
+
+print(paste("Number of participants AFTER MC:", nrow(data)))
+# n = 210
+
+# Make sure same people are doing both parts
 part1_participants <- prescreen_df$ProlificID
-part2_participants <- init_df$ProlificID
+part2_participants <- data$ProlificID 
 all(part2_participants[-c(1:2)] %in% part1_participants)
 
 # Clean data -----------------------------------------
 
-  # Remove first 2 header rows
-  data <- data[-c(1, 2),]
   # Turn empty strings to na's
   data <- data |> mutate_all(~na_if(., ""))
-  
-  # Filter out rows that weren't finished
-  data <- data |>
-    filter(Finished == 1)
   
   # Add a column for which condition participant was assigned to
   data <- data |>
     mutate(Condition = ifelse(!is.na(Control_common_1), "Control",
-                              ifelse(!is.na(Q1), "Subtle",
-                                     "Blatant")))
+                              ifelse(!is.na(Q1), "Implicit",
+                                     "Explicit")))
   
   # Calculate task performance
   correct_answers <- c(
@@ -58,7 +74,7 @@ all(part2_participants[-c(1:2)] %in% part1_participants)
                                  !is.na(data[[col]])))
   
   # Reorder the "Condition" factor variable
-  order <- c("Control", "Subtle", "Blatant")
+  order <- c("Control", "Implicit", "Explicit")
   data$Condition <- factor(data$Condition, levels = order)
   
   # Recode factor variables
@@ -71,14 +87,14 @@ all(part2_participants[-c(1:2)] %in% part1_participants)
                            "4" = "75th percentile",
                            "5" = "90th percentile")
     )
+
   
   clean_data <- data |> 
     # Manually fix errors
     mutate(`post-expectation` = case_when(
-      `post-expectation` == "4-5" ~ 5,
-      `post-expectation` == "At least 10" ~ 10,
-      TRUE ~ as.numeric(as.character(`post-expectation`))
-    )) |>
+      `post-expectation` == "4-5" ~ "5",
+      `post-expectation` == "At least 10" ~ "10",
+      TRUE ~ `post-expectation`)) |>
     # Convert columns to numeric
     mutate_at(vars(`Duration (in seconds)`,
                    Score, 
@@ -100,7 +116,7 @@ all(part2_participants[-c(1:2)] %in% part1_participants)
            RIT1, RIT2, RIT3, RIT4, RIT5, RIT6, 
            B1, B2, B3_Reverse, 
            Centrality1, Centrality2, Centrality3, 
-           `Duration (in seconds)`, Feedback, Purpose) |> 
+           `Duration (in seconds)`, Feedback, Purpose, ProlificID) |> 
     #Rename
     rename(FamilyLanguage = Q1_1_TEXT,
            OtherLanguage = `Q2...35`,
@@ -110,17 +126,6 @@ all(part2_participants[-c(1:2)] %in% part1_participants)
            NumGenerations = Q6,
            Pre_Expectation = `pre-expectation`,
            Post_Expectation = `post-expectation`)
-  
-  print(paste("Number of participants BEFORE MC:", nrow(clean_data)))
-  
-  # Manipulation check
-  clean_data <- clean_data |>  
-    filter(!((mc_task != "1" &
-                mc_mathability != "1" &
-                mc_diagnostic != "1")))   
-  
-  print(paste("Number of participants AFTER MC:", nrow(clean_data)))
-  
   
   #Average DV's
   avg_data <- clean_data |>
@@ -141,49 +146,121 @@ all(part2_participants[-c(1:2)] %in% part1_participants)
            Centrality = round(mean(c_across(70:72), na.rm = TRUE), 3)
     ) |>
     dplyr::select(Condition, Score, AGQ_approach, AGQ_avoidance,Pre_Expectation,
-                  Post_Expectation, RIT, Belonging, Centrality, STAI_pre, STAI_post)
+                  Post_Expectation, RIT, Belonging, Centrality, STAI_pre, STAI_post,
+                  ProlificID)
     
   
+  # Bind prescreen data 
+  
+  prescreen_df <- prescreen_df |> 
+                    #Selecting necessary columns
+                    dplyr::select(ProlificID, Gender, M_Approach, M_Avoidance,P_Approach, P_Avoidance,
+                                  Reading_ID, Racial_ID, Gender_ID,
+                                  FirstGen, FirstGen_US, `1st_immigrant`,
+                                  `1st_age`, `2nd_immigrant`, HighestDegree, Major, STEMMajor, GPA)
+  
+  full_data <- merge(avg_data, prescreen_df, by = "ProlificID", all = FALSE)
+              
 
 # EDA ---------------------------------------------------------------------
 
-# Score distribution
+# Conditions
+table(full_data$Condition)
   
-  ggplot(data = clean_data, aes(x = Score)) +
-    geom_density() +
+# Score distribution
+  ggplot(data = full_data, aes(x = Score)) +
+    geom_histogram() +
     labs(title = "Distribution of Performance") +
     theme_bw() +
     # Add vertical line for mean
     geom_vline(aes(xintercept = mean(Score)), color = "red", linetype = "dashed", size = 1) +
     # Annotate with numeric mean value
-    annotate("text", x = mean(clean_data$Score), y = 0.03, 
-             label = paste("Mean =", round(mean(clean_data$Score), 2)), vjust = 1.5, color = "red")
+    annotate("text", x = mean(full_data$Score), y = 25, 
+             label = paste("Mean =", round(mean(full_data$Score), 2)), vjust = 1.5, color = "red")
   
 # Analysis ------------------------------------------------------------------
 
 # Primary ANOVA (condition x score)
-summary(aov(Score ~ Condition, data = clean_data))
+summary(aov(Score ~ Condition, data = full_data))
   
-  ggplot(data = clean_data, aes(x = Condition, y = Score)) +
+  ggplot(data = full_data, aes(x = Condition, y = Score)) +
     geom_boxplot() +
-    theme_bw()
+    theme_minimal()
   
-# AGQ as a mediator
-# Does the condition lead to AGQ differences? 
-summary(aov(AGQ_approach ~ Condition, data = avg_data))
-summary(aov(AGQ_avoidance ~ Condition, data = avg_data))
-# Does AGQ lead to diff in scores? 
-summary(lm(Score ~ AGQ_approach, data = avg_data))
-summary(lm(Score ~ AGQ_avoidance, data = avg_data))
-
-  ggplot(data = avg_data, aes(x = AGQ_approach, y = Score)) +
+  ggplot(data = full_data, aes(x = Pre_Expectation, y = Score)) +
     geom_point(alpha = 0.5) +
     geom_smooth(method = "lm", se = FALSE, color = "blue") +
-    theme_minimal()
+    theme_minimal()+
+    facet_wrap(~ Condition)
   
-  ggplot(data = avg_data, aes(x = AGQ_avoidance, y = Score)) +
+# T-tests
+  control_only <- subset(full_data, full_data$Condition == "Control")
+  implicit_only <- subset(full_data, full_data$Condition == "Implicit")
+  explicit_only <- subset(full_data, full_data$Condition == "Explicit")
+  
+  t.test(implicit_only$Score, explicit_only$Score, paired = TRUE)
+  
+  
+# summary(aov(Score ~ Condition + Condition*Pre_Expectation, data = full_data))
+  
+##########
+
+# AGQ as a mediator
+# Does the condition lead to AGQ differences? 
+summary(aov(AGQ_approach ~ Condition, 
+            data = full_data))
+summary(aov(AGQ_avoidance ~ Condition, data = full_data))
+# Does AGQ lead to diff in scores? 
+summary(lm(Score ~ AGQ_approach + Pre_Expectation, data = full_data))
+summary(lm(Score ~ AGQ_avoidance+ Pre_Expectation, data = full_data))
+
+  ggplot(data = full_data, aes(x = P_Approach, y = Score)) +
+    geom_point(alpha = 0.5) +
+    geom_smooth(method = "lm", se = FALSE, color = "blue") +
+    theme_minimal()+
+    facet_wrap(~ Condition)
+  
+  ggplot(data = full_data, aes(x = AGQ_approach, y = Score)) +
+    geom_point(alpha = 0.5) +
+    geom_smooth(method = "lm", se = FALSE, color = "blue") +
+    theme_minimal()+
+    facet_wrap(~ Condition)
+  
+  
+  mean(full_data$P_Approach - full_data$AGQ_approach)
+  
+  ggplot(data = full_data, aes(x = P_Avoidance, y = Score)) +
     geom_point(alpha = 0.5) +
     geom_smooth(method = "lm", se = FALSE, color = "red") +
-    theme_minimal()
+    theme_minimal()+
+    facet_wrap(~ Condition)
   
+  
+# Change in Centrality
+  full_data |> 
+    group_by(Condition) |> 
+    summarize(Pre_Centrality = mean(Racial_ID),
+              Post_Centrality = mean(Centrality),
+              Drop = mean(Centrality) - mean(Racial_ID))
+  
+  full_data <- full_data |> 
+                  mutate(Diff_Centrality = Centrality - Racial_ID)
+  
+  ggplot(data = full_data, aes(x = Diff_Centrality)) +
+    geom_density()
+  
+  
+  centrality_model <- lm(Centrality ~ Condition + Racial_ID + Condition:Racial_ID, 
+                         data = full_data)
+  summary(centrality_model)
+  
+  
+
+  
+  
+  
+  
+  
+
+
 
