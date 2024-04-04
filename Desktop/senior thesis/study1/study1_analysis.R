@@ -6,6 +6,13 @@ library(tidyverse)
 library(crosstable)
 library(multcompView)
 library(corrplot)
+library(psych)
+library(broom)
+library(rempsyc)
+library(bootES)
+library(modelbased)
+library(jtools)
+library(ggpubr)
 
 # Load data ---------------------------------------------------------------
 
@@ -18,6 +25,11 @@ part2_participants <- part2_df$ProlificID
 all(part2_participants %in% part1_participants)
 
 full_data <- read_csv("data/cleaned_full.csv")
+
+# Check for outliers ------------------------------------------------------
+
+# Are there any scores 3sd away from mean? NO
+#full_data$Score[abs(full_data$Score - mean(full_data$Score)) > 3 * sd(full_data$Score)]
 
 # EDA ---------------------------------------------------------------------
 
@@ -53,18 +65,29 @@ round(prop.table(table(full_data$`1st_immigrant`)),3)
 # Means/SDs ---------------------------------------------------------------
 
 # Summary stats - PRESCREEN
-crosstable(full_data, 
-           cols = c(Gender, Age, GPA, HighestDegree, STEMMajor, 
-                    FirstGen, `1st_immigrant`, `2nd_immigrant`), 
+baseline_stats <- full_data |> 
+                  rename(`First-gen student` = FirstGen,
+                         `First-gen immigrant` = `1st_immigrant`,
+                         `Second-gen immigrant` = `2nd_immigrant`,
+                         `Performance Approach` = P_Approach,
+                         `Performance Avoidance` = P_Avoidance,
+                         `Math Identification` = Math_ID,
+                         `Reading Identification` = Reading_ID,
+                         `Gender Identification` = Gender_ID,
+                         `Racial Centrality` = Racial_ID)
+  
+crosstable(baseline_stats, 
+           cols = c(HighestDegree, STEMMajor, 
+                    `First-gen student`, `First-gen immigrant`, 
+                    `Second-gen immigrant`, GPA), 
            num_digits = 2,
            showNA =  "no") |> 
   as_flextable()
 
-crosstable(full_data, 
-           cols = c(M_Approach, M_Avoidance, P_Approach, P_Avoidance, 
-                    Math_ID, Reading_ID,
-                    Racial_ID, Gender_ID), 
-           by = Condition,
+crosstable(baseline_stats, 
+           cols = c(`Performance Approach`, `Performance Avoidance`, 
+                    `Math Identification`, `Reading Identification`,
+                    `Gender Identification`, `Racial Centrality`), 
            num_digits = 2,
            showNA =  "no") |> 
   as_flextable()
@@ -82,21 +105,81 @@ crosstable(full_data,
 
 # ANOVA ------------------------------------------------------------------
 
+# Reorder the "Condition" factor variable
+order <- c("Control", "Implicit", "Explicit")
+full_data$Condition <- factor(full_data$Condition, levels = order)
+
 # Primary ANOVA (condition x score)
 summary(aov(Score ~ Condition, data = full_data))
-  
-  ggplot(data = full_data, aes(x = Condition, y = Score)) +
-    geom_boxplot() +
-    theme_minimal()
+
+# Boxplot  
+primary_boxplot <- ggplot(data = full_data, aes(x = Condition, y = Score)) +
+                     geom_boxplot() +
+                     labs(x = "Stereotype Activation",
+                          y = "Number Correct on Spatial Rotation Task") +
+                     theme_minimal() +
+                     scale_y_continuous(breaks = seq(0, ceiling(max(full_data$Score)), by = 3))
+       
+ primary_boxplot + theme_apa()
+ 
+ summary_data <- full_data |> 
+   group_by(Condition) |> 
+   summarise(mean_score = mean(Score),
+             sd_score = sd(Score), 
+             # Standard error
+             se_score = sd_score / sqrt(n()))  
+
+ 
+# Create barplot with error bars
+ primary_barplot <- ggplot(data = summary_data, aes(x = Condition, y = mean_score)) +
+   geom_bar(stat = "identity", width = 0.6) + # Adjust width to bring bars closer
+   labs(x = "Stereotype Activation",
+        y = "Number Correct on Spatial Rotation Task") +
+   geom_errorbar(aes(ymin = mean_score - se_score, 
+                     ymax = mean_score + se_score), 
+                 width = 0.1) +
+   scale_y_continuous(breaks = seq(0, ceiling(max(summary_data$mean_score)), 
+                                   by = 2))
+   primary_barplot + theme_apa()
+ 
   
 # Pairwise comparisons  
 primary_test <- aov(Score ~ Condition, data = full_data)
 primary_Tukey <- TukeyHSD(x=primary_test, conf.level=0.95) 
   plot(primary_Tukey, las=1, asp = 0.5, cex.axis = 0.5) 
   
+# Contrasts
+  control_only <- subset(full_data, full_data$Condition == "Control")
+  implicit_only <- subset(full_data, full_data$Condition == "Implicit")
+  explicit_only <- subset(full_data, full_data$Condition == "Explicit")
+  
+t.test(implicit_only$Score, control_only$Score)
+t.test(explicit_only$Score, control_only$Score)
+
+primary_contrast <- nice_contrasts(
+                        response = "Score",
+                        group = "Condition",
+                        data = full_data
+                      )
+
+contrast_table <- nice_table(primary_contrast)
+
+
 # Secondary ANOVA (condition x DVs)
 summary(aov(AGQ_approach ~ Condition, data = full_data))
 summary(aov(AGQ_avoidance ~ Condition, data = full_data))
+summary(lm(Score ~ AGQ_approach, data = full_data))
+
+ggplot(data = full_data, aes(x = AGQ_approach, y = Score)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "lm", se = FALSE, color = "blue") +
+  theme_minimal()+
+  facet_wrap(~ Condition)
+
+summary(lm(AGQ_approach ~ Condition, data = full_data))  
+summary(lm(Score ~ AGQ_avoidance, data = full_data))  
+  
+summary(lm(Score ~ AGQ_avoidance*Condition, data = full_data))
   
   ggplot(data = full_data, aes(x = Condition, y = AGQ_approach)) +
     geom_boxplot() +
@@ -109,31 +192,76 @@ summary(aov(AGQ_avoidance ~ Condition, data = full_data))
 summary(aov(Pre_Expectation ~ Condition, data = full_data))
 summary(aov(Post_Expectation ~ Condition, data = full_data))
 
-  ggplot(data = full_data, aes(x = Condition, y = Pre_Expectation)) +
+  ggplot(data = full_data, aes(x = Condition, y = Post_Expectation)) +
     geom_boxplot() +
     theme_minimal()  
+  
+  nice_contrasts(response = "Pre_Expectation",
+                  group = "Condition",
+                  data = full_data
+                         )
   
 summary(aov(STAI_pre ~ Condition, data = full_data))
 summary(aov(STAI_post ~ Condition, data = full_data))
 
-  ggplot(data = full_data, aes(x = Condition, y = STAI_pre)) +
+  ggplot(data = filter(full_data, STEMMajor =="STEM"), aes(x = Condition, y = Centrality)) +
     geom_boxplot() +
     theme_minimal()  
-  
-summary(aov(RIT ~ Condition, data = full_data))
-summary(aov(Belonging ~ Condition, data = full_data))
-summary(aov(Centrality ~ Condition, data = full_data))
   
   ggplot(data = full_data, aes(x = Condition, y = Centrality)) +
     geom_boxplot() +
+    theme_minimal() 
+  
+# Between condition differences on additional variables
+  
+summary(aov(RIT ~ Condition, data = full_data))
+summary(aov(Pre_Expectation ~ Condition, data = full_data))
+summary(aov(Centrality ~ Condition, data = full_data))
+  
+Centrality_condition <- ggplot(data = full_data, aes(x = Condition, y = Centrality)) +
+    geom_boxplot() +
+  labs(x = "Stereotype Activation",
+       y = "Racial Centrality") +
     theme_minimal()  
+  
+RIT_condition <-  ggplot(data = full_data, aes(x = Condition, y = RIT)) +
+    geom_boxplot() +
+    labs(x = "Stereotype Activation",
+         y = "Racial Identity Threat") +
+    theme_minimal() 
+
+STAI_condition <-  ggplot(data = full_data, aes(x = Condition, y = STAI_pre)) +
+  geom_boxplot() +
+  labs(x = "Stereotype Activation",
+       y = "Pre-Task Anxiety") +
+  theme_minimal() 
+
+# Combine plots
+ggarrange(Centrality_condition, RIT_condition, STAI_condition,
+          labels = c("A", "B", "C"),
+          ncol = 3, nrow = 1,
+          common.legend = TRUE, legend = "bottom") 
+
   
 
 # T-tests for part 1/2 comparisons ----------------------------------------
 
+# Create columns for differences
+  full_data <-  full_data |> 
+    mutate(Approach_diff = P_Approach - AGQ_approach,
+           Avoidance_diff = P_Avoidance - AGQ_avoidance,
+           Centrality_diff = Racial_ID - Centrality)
+
+# Average difference by condition
+aggregate(Approach_diff ~ Condition, data = full_data, FUN = mean)
+# Are the differences significant? 
+summary(aov(Approach_diff ~ Condition, data = full_data))  
+
 t.test(full_data$P_Approach, full_data$AGQ_approach, paired = TRUE)
 t.test(full_data$P_Avoidance, full_data$AGQ_avoidance, paired = TRUE)
 t.test(full_data$Racial_ID, full_data$Centrality, paired = TRUE)
+
+
 
 
 # Correlations ------------------------------------------------------------
@@ -142,20 +270,96 @@ correlations_data <- full_data |>
   select(Score, Pre_Approach = P_Approach, Pre_Avoidance = P_Avoidance,
          Pre_Centrality = Racial_ID, 
          Approach = AGQ_approach, Avoidance = AGQ_avoidance,
-         RIT, Belonging, Centrality)
+         RIT, Belonging, Centrality, Pre_Expectation, Post_Expectation, Math_ID,
+         STAI_pre, STAI_post)
 rquery.cormat(correlations_data)
 
+### SIGNIFICANT PREDICTORS
+
+summary(lm(Score ~ Pre_Expectation, full_data))
+summary(lm(Score ~ Post_Expectation, full_data))
+summary(lm(Score ~ STAI_pre, full_data))
+
+###
+
+ggplot(data = full_data, aes(x = STEMMajor, y = Score)) +
+  geom_boxplot() +
+  theme_minimal() +
+  facet_wrap(~ Condition)
+
+ggplot(data = full_data, aes(x = Racial_ID)) +
+  geom_density()+
+  geom_vline(aes(xintercept = mean(Racial_ID)), color = "red", linetype = "dashed", size = 1) 
+  
+
+ggplot(data = full_data, aes(x = Math_ID)) +
+  geom_density() 
+
+ggplot(data = full_data, aes(x = Pre_Expectation)) +
+  geom_density()+
+  geom_vline(aes(xintercept = mean(Pre_Expectation)), color = "red", linetype = "dashed", size = 1) 
+
+
+# Split the data ----------------------------------------------------------
+# For whom does this matter!
+
+# STEM ONLY - yes AGQ
+summary(aov(Score ~ Condition, data = filter(full_data, STEMMajor =="STEM")))
+summary(lm(Score ~ AGQ_approach, data = filter(full_data, STEMMajor =="STEM")))
+summary(lm(Score ~ AGQ_avoidance, data = filter(full_data, STEMMajor =="STEM")))
+
+cor(filter(full_data, STEMMajor =="STEM")$AGQ_avoidance, filter(full_data, STEMMajor =="STEM")$Score)
+summary(lm(Score ~ AGQ_approach, data = full_data))
+# GENDER - none
+
+summary(aov(Score ~ Condition, data = filter(full_data, Gender =="Woman")))
+summary(lm(Score ~ P_Approach, data = filter(full_data, Gender =="Woman")))
+summary(lm(Score ~ P_Avoidance, data = filter(full_data, Gender =="Woman")))
+
+# CENTRALITY
+
+#Split dataset into low/high centrality (if less than 3.3, then low)
+# median = 3.3
+
+ggplot(data = full_data, aes(x = Condition, y = Centrality)) +
+  geom_boxplot() +
+  theme_bw()
+
+full_data$Centrality_F <- ifelse(full_data$Centrality < 3.3, "Low", "High")
+full_data$Centrality_F <- ifelse(full_data$Centrality < 3.3, "Low", "High")
+full_data$Centrality_F <- ifelse(full_data$Centrality < 3.3, "Low", "High")
+
+
+low_Centrality <- subset(full_data, full_data$Centrality_F == "Low")
+high_Centrality <-subset(full_data, full_data$Centrality_F == "High")
+
+summary(aov(Score ~ Condition, data = high_Centrality))
+
+t.test(low_Centrality$Score, high_Centrality$Score) 
+
+ggplot(data = full_data, aes(x = Condition, y = Score, fill = Centrality_F)) +
+  geom_boxplot() +
+  theme_bw()
+
+ggplot(data = full_data, aes(x = Condition, y = AGQ_approach, fill = Centrality_F)) +
+  geom_boxplot() +
+  theme_bw()
+# Low centrality folks are significantly less likely to adopt an approach mindset
+t.test(low_Centrality$AGQ_approach, high_Centrality$AGQ_approach) 
+
+ggplot(data = full_data, aes(x = Condition, y = AGQ_avoidance, fill = Centrality_F)) +
+  geom_boxplot() +
+  theme_bw()
+
+# And likely to adopt an avoidance
+t.test(low_Centrality$AGQ_avoidance, high_Centrality$AGQ_avoidance) 
+
+
+
 # Extra -------------------------------------------------------------------
+
   
-  # T-tests
-  control_only <- subset(full_data, full_data$Condition == "Control")
-  implicit_only <- subset(full_data, full_data$Condition == "Implicit")
-  explicit_only <- subset(full_data, full_data$Condition == "Explicit")
-  
-  t.test(implicit_only$Score, explicit_only$Score, paired = TRUE)
-  
-  
-# summary(aov(Score ~ Condition + Condition*Pre_Expectation, data = full_data))
+summary(lm(Score ~ Condition*Pre_Expectation + AGQ_approach, data = full_data))
   
   ggplot(data = full_data, aes(x = Pre_Expectation, y = Score)) +
     geom_point(alpha = 0.5) +
