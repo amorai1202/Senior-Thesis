@@ -75,7 +75,8 @@ baseline_stats <- full_data |>
                          `Reading Identification` = Reading_ID,
                          `Gender Identification` = Gender_ID,
                          `Racial Centrality` = Racial_ID)
-  
+
+# Tables for manuscript  
 crosstable(baseline_stats, 
            cols = c(HighestDegree, STEMMajor, 
                     `First-gen student`, `First-gen immigrant`, 
@@ -130,9 +131,9 @@ primary_boxplot <- ggplot(data = full_data, aes(x = Condition, y = Score)) +
              se_score = sd_score / sqrt(n()))  
 
  
-# Create barplot with error bars
+# Barplot with error bars
  primary_barplot <- ggplot(data = summary_data, aes(x = Condition, y = mean_score)) +
-   geom_bar(stat = "identity", width = 0.6) + # Adjust width to bring bars closer
+   geom_bar(stat = "identity", width = 0.6) + 
    labs(x = "Stereotype Activation",
         y = "Number Correct on Spatial Rotation Task") +
    geom_errorbar(aes(ymin = mean_score - se_score, 
@@ -261,8 +262,98 @@ t.test(full_data$P_Approach, full_data$AGQ_approach, paired = TRUE)
 t.test(full_data$P_Avoidance, full_data$AGQ_avoidance, paired = TRUE)
 t.test(full_data$Racial_ID, full_data$Centrality, paired = TRUE)
 
+# Correlation function ----------------------------------------------------
 
-
+rquery.cormat<-function(x,
+                        type=c('lower', 'upper', 'full', 'flatten'),
+                        graph=TRUE,
+                        graphType=c("correlogram", "heatmap"),
+                        col=NULL, ...)
+{
+  library(corrplot)
+  # Helper functions
+  #+++++++++++++++++
+  # Compute the matrix of correlation p-values
+  cor.pmat <- function(x, ...) {
+    mat <- as.matrix(x)
+    n <- ncol(mat)
+    p.mat<- matrix(NA, n, n)
+    diag(p.mat) <- 0
+    for (i in 1:(n - 1)) {
+      for (j in (i + 1):n) {
+        tmp <- cor.test(mat[, i], mat[, j], ...)
+        p.mat[i, j] <- p.mat[j, i] <- tmp$p.value
+      }
+    }
+    colnames(p.mat) <- rownames(p.mat) <- colnames(mat)
+    p.mat
+  }
+  # Get lower triangle of the matrix
+  getLower.tri<-function(mat){
+    upper<-mat
+    upper[upper.tri(mat)]<-""
+    mat<-as.data.frame(upper)
+    mat
+  }
+  # Get upper triangle of the matrix
+  getUpper.tri<-function(mat){
+    lt<-mat
+    lt[lower.tri(mat)]<-""
+    mat<-as.data.frame(lt)
+    mat
+  }
+  # Get flatten matrix
+  flattenCorrMatrix <- function(cormat, pmat) {
+    ut <- upper.tri(cormat)
+    data.frame(
+      row = rownames(cormat)[row(cormat)[ut]],
+      column = rownames(cormat)[col(cormat)[ut]],
+      cor  =(cormat)[ut],
+      p = pmat[ut]
+    )
+  }
+  # Define color
+  if (is.null(col)) {
+    col <- colorRampPalette(
+      c("#67001F", "#B2182B", "#D6604D", "#F4A582",
+        "#FDDBC7", "#FFFFFF", "#D1E5F0", "#92C5DE", 
+        "#4393C3", "#2166AC", "#053061"))(200)
+    col<-rev(col)
+  }
+  
+  # Correlation matrix
+  cormat<-signif(cor(x, use = "complete.obs", ...),2)
+  pmat<-signif(cor.pmat(x, ...),2)
+  # Reorder correlation matrix
+  ord<-corrMatOrder(cormat, order="hclust")
+  cormat<-cormat[ord, ord]
+  pmat<-pmat[ord, ord]
+  # Replace correlation coeff by symbols
+  sym<-symnum(cormat, abbr.colnames=FALSE)
+  # Correlogram
+  if(graph & graphType[1]=="correlogram"){
+    corrplot(cormat, type=ifelse(type[1]=="flatten", "lower", type[1]),
+             tl.col="black", tl.srt=45,col=col,...)
+  }
+  else if(graphType[1]=="heatmap")
+    heatmap(cormat, col=col, symm=TRUE)
+  # Get lower/upper triangle
+  if(type[1]=="lower"){
+    cormat<-getLower.tri(cormat)
+    pmat<-getLower.tri(pmat)
+  }
+  else if(type[1]=="upper"){
+    cormat<-getUpper.tri(cormat)
+    pmat<-getUpper.tri(pmat)
+    sym=t(sym)
+  }
+  else if(type[1]=="flatten"){
+    cormat<-flattenCorrMatrix(cormat, pmat)
+    pmat=NULL
+    sym=NULL
+  }
+  list(r=cormat, p=pmat, sym=sym)
+}
 
 # Correlations ------------------------------------------------------------
 
@@ -301,7 +392,6 @@ ggplot(data = full_data, aes(x = Pre_Expectation)) +
 
 
 # Split the data ----------------------------------------------------------
-# For whom does this matter!
 
 # STEM ONLY - yes AGQ
 summary(aov(Score ~ Condition, data = filter(full_data, STEMMajor =="STEM")))
@@ -354,11 +444,8 @@ ggplot(data = full_data, aes(x = Condition, y = AGQ_avoidance, fill = Centrality
 # And likely to adopt an avoidance
 t.test(low_Centrality$AGQ_avoidance, high_Centrality$AGQ_avoidance) 
 
-
-
 # Extra -------------------------------------------------------------------
 
-  
 summary(lm(Score ~ Condition*Pre_Expectation + AGQ_approach, data = full_data))
   
   ggplot(data = full_data, aes(x = Pre_Expectation, y = Score)) +
@@ -379,16 +466,12 @@ summary(lm(Score ~ Condition*Pre_Expectation + AGQ_approach, data = full_data))
   plot(Tukey, las=1, asp = 0.5, cex.axis = 0.5) 
   title(main="Pre-Expectation", 
         col.main="red", cex.main=0.8, line = 1)
-  
 
   
   ggplot(data = full_data, aes(x = Pre_Expectation, y = Score)) +
     geom_point() +
     geom_smooth(method = "lm", se = FALSE, color = "blue") +
     theme_minimal()
-  
-  
-  
   
 ##########
 
