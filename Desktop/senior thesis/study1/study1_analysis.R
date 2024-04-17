@@ -95,9 +95,22 @@ crosstable(baseline_stats,
 
 # Summary stats - PART 2
 
-crosstable(full_data, 
-           cols = c(Score, AGQ_approach, AGQ_avoidance,
-                    RIT, Belonging, Centrality), 
+part2_stats <- full_data |> 
+  rename(`Performance Approach` = AGQ_approach,
+         `Performance Avoidance` = AGQ_avoidance,
+         `Pre-Task Expectation` = Pre_Expectation,
+         `Post-Task Expectation` = Post_Expectation,
+         `Pre-Task Anxiety` = STAI_pre, 
+         `Racial Identity Threat` = RIT,
+         `Racial Centrality` = Centrality)
+
+crosstable(part2_stats, 
+           cols = c(Score, `Performance Approach`, 
+                    `Performance Avoidance`,
+                    `Pre-Task Expectation`, 
+                    `Pre-Task Anxiety`,
+                    `Racial Identity Threat`,
+                    Belonging, `Racial Centrality`), 
            by = Condition,
            num_digits = 2,
            showNA =  "no") |> 
