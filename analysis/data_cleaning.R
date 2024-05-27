@@ -4,15 +4,16 @@ library(tidyverse)
 
 # Clean part 1 --------------------------------------------------------------
 
-raw_prescreen <- read_csv("data/raw_prescreen.csv")
+# CSV file imported after filtering out Qualtrics duplicates and bots
+raw_prescreen <- read_csv("data/part1_0326.csv")
 #View(raw_prescreen)
 #colnames(raw_prescreen)
 
 filter_df <- raw_prescreen |> 
   dplyr::select(23,5,24,26:30,32:66) |> 
+  # remove header rows
   slice(-c(1:2))
   
-
 clean_prescreen <- 
   filter_df |> 
   # Recode columns
@@ -92,15 +93,15 @@ part1_data <- prescreen_avg |>
 
 #write.csv(part1_data,"data/cleaned_part1.csv", row.names = FALSE)
 
-# Clean part 2 ------------------------------------------------------------
+# Checking participants in part 2 --------------------------------------
 
-all_data <- read_csv("data/data_0326.csv")
+all_data <- read_csv("data/part2_0326.csv")
 
 # Extract IDs from either column
 all_data <- all_data |> 
   mutate(ProlificID = coalesce(ProlificID, PROLIFIC_PID))
 
-# Calculate attrition 
+# Calculate attrition / How many completed both parts
 n_part1 <- nrow(part1_data)
 n_part2 <- length(which(all_data$ProlificID[-c(1,2)] %in% part1_data$ProlificID))
 ((n_part1 - n_part2) / n_part1) * 100
@@ -122,7 +123,7 @@ data <- filter_data |>
 print(paste("Number of participants AFTER MC:", nrow(data)))
 # n = 210
 
-### CLEAN DATA
+# Clean part 2 -------------------------------------------------------
 
 # Turn empty strings to na's
 data <- data |> mutate_all(~na_if(., ""))
