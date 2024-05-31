@@ -20,6 +20,13 @@ part1_df <- read_csv("data/cleaned_part1.csv")
 part2_df <- read_csv("data/cleaned_part2.csv")
 full_data <- read_csv("data/cleaned_full.csv")
 
+#Participants who passed all 3 MC questions
+MC_data <- full_data |> 
+              filter((mc_task == "1" &
+                      mc_mathability == "1" &
+                      mc_diagnostic == "1"))
+table(MC_data$Condition)
+
 # Check for outliers ------------------------------------------------------
 
 # Are there any scores 3sd away from mean? NO
@@ -89,7 +96,7 @@ crosstable(baseline_stats,
 
 # Summary stats - PART 2
 
-part2_stats <- full_data |> 
+part2_stats <- STEM_data |> 
   rename(`Performance Approach` = AGQ_approach,
          `Performance Avoidance` = AGQ_avoidance,
          `Pre-Task Expectation` = Pre_Expectation,

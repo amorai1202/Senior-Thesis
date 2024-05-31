@@ -113,7 +113,7 @@ filter_part2 <- filter_part2 |>
 passed_mc <- filter_part2 |>  
   filter(!((mc_task != "1" &
               mc_mathability != "1" &
-              mc_diagnostic != "1")))   
+              mc_diagnostic != "1")))
 
 #print(paste("Number of participants AFTER MC:", nrow(data)))
 
@@ -229,6 +229,7 @@ part2_data <- part2_avg |>
   dplyr::select(Condition, Score, AGQ_approach, AGQ_avoidance,Pre_Expectation,
                 Post_Expectation, RIT, Belonging, Centrality, STAI_pre, STAI_post, 
                 Control_common, Control_true, Blatant_common, Blatant_true, Age,
+                mc_task, mc_mathability, mc_diagnostic,
                 ProlificID)
 
 # n = 239
