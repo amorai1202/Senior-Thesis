@@ -89,7 +89,7 @@ part1_avg <- clean_part1 |>
 
 part1_data <- part1_avg |> 
                 dplyr::select(c(1:13,44:53))
-
+# n = 303
 #write.csv(part1_data,"data/cleaned_part1.csv", row.names = FALSE)
 
 # Checking participants in part 2 --------------------------------------
@@ -100,29 +100,27 @@ part2_raw <- read_csv("data/part2_0530.csv") #n = 289
 filter_part2 <- part2_raw |> 
   filter(Finished == "1" & 
            # Include data 
-           debrief_include_data == "1") |> 
-  # remove header rows
-  slice(-c(1:2))
+           debrief_include_data == "1")
+# n = 247
 
 # Extract IDs from either column
-part2_data <- filter_part2 |> 
+filter_part2 <- filter_part2 |> 
   mutate(ProlificID = coalesce(ProlificID, PROLIFIC_PID))
 
 #print(paste("Number of participants BEFORE MC:", nrow(part2_data)))
 
 # Manipulation check
-data <- part2_data |>  
+passed_mc <- filter_part2 |>  
   filter(!((mc_task != "1" &
               mc_mathability != "1" &
               mc_diagnostic != "1")))   
 
 #print(paste("Number of participants AFTER MC:", nrow(data)))
-# n = 237
 
 # Clean part 2 -------------------------------------------------------
 
 # Turn empty strings to na's
-data <- data |> mutate_all(~na_if(., ""))
+data <- passed_mc |> mutate_all(~na_if(., ""))
 
 # Add a column for which condition participant was assigned to
 data <- data |>
@@ -229,17 +227,20 @@ part2_avg <- clean_data |>
 
 part2_data <- part2_avg |> 
   dplyr::select(Condition, Score, AGQ_approach, AGQ_avoidance,Pre_Expectation,
-                Post_Expectation, RIT, Belonging, Centrality, STAI_pre, STAI_post, Age,
+                Post_Expectation, RIT, Belonging, Centrality, STAI_pre, STAI_post, 
+                Control_common, Control_true, Blatant_common, Blatant_true, Age,
                 ProlificID)
 
-  
+# n = 239
 #write.csv(part2_data,"data/cleaned_part2.csv", row.names = FALSE)
 
 
 # Check for participants who completed both sessions ----------------------
 
+# How many participants completed part 1 but not part 2 (n = 73)
+not_in_part2 <- which(!(part1_data$ProlificID %in% part2_data$ProlificID))
 # How many participants completed part 2 but not part 1 (n = 8)
-not_in_part1 <- !(part2_data$ProlificID %in% part1_data$ProlificID) 
+not_in_part1 <- which(!(part2_data$ProlificID %in% part1_data$ProlificID))
 # Which participants completed both parts? n = 228
 participants <- intersect(part1_data$ProlificID, part2_data$ProlificID)
 # Calculate attrition

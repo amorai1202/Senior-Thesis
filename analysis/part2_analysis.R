@@ -18,12 +18,6 @@ library(ggpubr)
 
 part1_df <- read_csv("data/cleaned_part1.csv")
 part2_df <- read_csv("data/cleaned_part2.csv")
-
-# Make sure same people are doing both parts
-part1_participants <- part1_df$ProlificID
-part2_participants <- part2_df$ProlificID 
-all(part2_participants %in% part1_participants)
-
 full_data <- read_csv("data/cleaned_full.csv")
 
 # Check for outliers ------------------------------------------------------
