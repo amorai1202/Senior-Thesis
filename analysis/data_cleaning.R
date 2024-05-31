@@ -4,18 +4,17 @@ library(tidyverse)
 
 # Clean part 1 --------------------------------------------------------------
 
-# CSV file imported after filtering out Qualtrics duplicates and bots
-raw_prescreen <- read_csv("data/part1_0326.csv")
-#View(raw_prescreen)
-#colnames(raw_prescreen)
+# CSV file imported after filtering out Qualtrics duplicates + bots
+old_prescreen <- read_csv("data/part1_0326.csv") 
+part1_raw <- read_csv("data/part1_0530.csv") 
 
-filter_df <- raw_prescreen |> 
-  dplyr::select(23,5,24,26:30,32:66) |> 
-  # remove header rows
-  slice(-c(1:2))
+filter_part1 <- part1_raw |> 
+  filter(Finished == "1" & #complete responses
+           debrief_include_data == "1") |>  #agreed to include data
+  dplyr::select(23,5,24,26:30,32:66)
   
-clean_prescreen <- 
-  filter_df |> 
+clean_part1 <- 
+  filter_part1 |> 
   # Recode columns
   mutate(Gender = 
            recode_factor(Gender,
@@ -74,7 +73,7 @@ clean_prescreen <-
   mutate_at(c(2,7,13:43), as.numeric) 
 
 # Calculate baseline averages
-prescreen_avg <- clean_prescreen |> 
+part1_avg <- clean_part1 |> 
   rowwise() |> 
   mutate(M_Approach = round(mean(c_across(c(14,16,20)), na.rm = TRUE), 3),
          M_Avoidance = round(mean(c_across(c(18,22,24)), na.rm = TRUE), 3),
@@ -88,40 +87,37 @@ prescreen_avg <- clean_prescreen |>
          Gender_ID = round(mean(c_across(41:43), na.rm = TRUE), 3)
   )
 
-part1_data <- prescreen_avg |> 
+part1_data <- part1_avg |> 
                 dplyr::select(c(1:13,44:53))
 
 #write.csv(part1_data,"data/cleaned_part1.csv", row.names = FALSE)
 
 # Checking participants in part 2 --------------------------------------
 
-all_data <- read_csv("data/part2_0326.csv")
-
-# Extract IDs from either column
-all_data <- all_data |> 
-  mutate(ProlificID = coalesce(ProlificID, PROLIFIC_PID))
-
-# Calculate attrition / How many completed both parts
-n_part1 <- nrow(part1_data)
-n_part2 <- length(which(all_data$ProlificID[-c(1,2)] %in% part1_data$ProlificID))
-((n_part1 - n_part2) / n_part1) * 100
+part2_raw <- read_csv("data/part2_0530.csv") #n = 289
 
 # Filter out incomplete surveys + those that don't want their data included
-filter_data <- all_data |> 
+filter_part2 <- part2_raw |> 
   filter(Finished == "1" & 
            # Include data 
-           debrief_include_data == "1") 
+           debrief_include_data == "1") |> 
+  # remove header rows
+  slice(-c(1:2))
 
-print(paste("Number of participants BEFORE MC:", nrow(filter_data)))
+# Extract IDs from either column
+part2_data <- filter_part2 |> 
+  mutate(ProlificID = coalesce(ProlificID, PROLIFIC_PID))
+
+#print(paste("Number of participants BEFORE MC:", nrow(part2_data)))
 
 # Manipulation check
-data <- filter_data |>  
+data <- part2_data |>  
   filter(!((mc_task != "1" &
               mc_mathability != "1" &
               mc_diagnostic != "1")))   
 
-print(paste("Number of participants AFTER MC:", nrow(data)))
-# n = 210
+#print(paste("Number of participants AFTER MC:", nrow(data)))
+# n = 237
 
 # Clean part 2 -------------------------------------------------------
 
@@ -213,7 +209,7 @@ clean_data <- data |>
          Post_Expectation = `post-expectation`)
 
 #Average DV's
-avg_data <- clean_data |>
+part2_avg <- clean_data |>
   # convert to numeric
   mutate(across(c(7:16, 21:72), as.numeric)) |>   
   rowwise() |>  
@@ -230,16 +226,33 @@ avg_data <- clean_data |>
          Belonging = round(mean(c_across(67:69), na.rm = TRUE), 3),
          Centrality = round(mean(c_across(70:72), na.rm = TRUE), 3)
   )
+
+part2_data <- part2_avg |> 
+  dplyr::select(Condition, Score, AGQ_approach, AGQ_avoidance,Pre_Expectation,
+                Post_Expectation, RIT, Belonging, Centrality, STAI_pre, STAI_post, Age,
+                ProlificID)
+
   
-#write.csv(avg_data,"data/cleaned_part2.csv", row.names = FALSE)
+#write.csv(part2_data,"data/cleaned_part2.csv", row.names = FALSE)
+
+
+# Check for participants who completed both sessions ----------------------
+
+# How many participants completed part 2 but not part 1 (n = 8)
+not_in_part1 <- !(part2_data$ProlificID %in% part1_data$ProlificID) 
+# Which participants completed both parts? n = 228
+participants <- intersect(part1_data$ProlificID, part2_data$ProlificID)
+# Calculate attrition
+n_part1 <- nrow(part1_data)
+n_part2 <- length(which(part2_data$ProlificID %in% part1_data$ProlificID))
+attrition <- ((n_part1 - n_part2) / n_part1) * 100
+
+# Filter to include only participants who completed both parts
+part1_final <- part1_data |> filter(ProlificID %in% participants)
+part2_final <- part2_data |> filter(ProlificID %in% participants)
 
 # Combine both sessions ---------------------------------------------------
 
-part2_data <- avg_data |> 
-                  dplyr::select(Condition, Score, AGQ_approach, AGQ_avoidance,Pre_Expectation,
-                            Post_Expectation, RIT, Belonging, Centrality, STAI_pre, STAI_post, Age,
-                            ProlificID)
-
-full_data <- merge(part2_data, part1_data, by = "ProlificID", all = FALSE)
+full_data <- merge(part1_final, part2_final, by = "ProlificID", all = FALSE)
 
 #write.csv(full_data,"data/cleaned_full.csv", row.names = FALSE)
