@@ -96,7 +96,7 @@ crosstable(baseline_stats,
 
 # Summary stats - PART 2
 
-part2_stats <- STEM_data |> 
+part2_stats <- MC_data |> 
   rename(`Performance Approach` = AGQ_approach,
          `Performance Avoidance` = AGQ_avoidance,
          `Pre-Task Expectation` = Pre_Expectation,
@@ -110,8 +110,7 @@ crosstable(part2_stats,
                     `Performance Avoidance`,
                     `Pre-Task Expectation`, 
                     `Pre-Task Anxiety`,
-                    `Racial Identity Threat`,
-                    Belonging, `Racial Centrality`), 
+                    `Racial Identity Threat`, `Racial Centrality`), 
            by = Condition,
            num_digits = 2,
            showNA =  "no") |> 
@@ -184,28 +183,58 @@ contrast_table <- nice_table(primary_contrast)
 summary(aov(AGQ_approach ~ Condition, data = full_data))
 summary(aov(AGQ_avoidance ~ Condition, data = full_data))
 summary(lm(Score ~ AGQ_approach, data = full_data))
+summary(lm(AGQ_approach ~ Condition, data = full_data))  
+summary(lm(Score ~ AGQ_avoidance, data = full_data))  
 
+ggplot(data = full_data, aes(x = Condition, y = AGQ_approach)) +
+  geom_boxplot() +
+  theme_minimal()  
+
+ggplot(data = full_data, aes(x = Condition, y = AGQ_avoidance)) +
+  geom_boxplot() +
+  theme_minimal()  
+  
+# Interactions!!!
+summary(lm(Score ~ AGQ_approach*Condition, data = full_data))
+  
 ggplot(data = full_data, aes(x = AGQ_approach, y = Score)) +
   geom_point(alpha = 0.5) +
   geom_smooth(method = "lm", se = FALSE, color = "blue") +
   theme_minimal()+
   facet_wrap(~ Condition)
 
-summary(lm(AGQ_approach ~ Condition, data = full_data))  
-summary(lm(Score ~ AGQ_avoidance, data = full_data))  
-  
-summary(lm(Score ~ AGQ_avoidance*Condition, data = full_data))
-  
-  ggplot(data = full_data, aes(x = Condition, y = AGQ_approach)) +
-    geom_boxplot() +
-    theme_minimal()  
-  
-  ggplot(data = full_data, aes(x = Condition, y = AGQ_avoidance)) +
-    geom_boxplot() +
-    theme_minimal()  
-  
-summary(aov(Pre_Expectation ~ Condition, data = full_data))
-summary(aov(Post_Expectation ~ Condition, data = full_data))
+summary(lm(Score ~ AGQ_avoidance*Condition, data = full_data))  
+
+ggplot(data = full_data, aes(x = AGQ_avoidance, y = Score)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "lm", se = FALSE, color = "blue") +
+  theme_minimal()+
+  facet_wrap(~ Condition)
+
+
+summary(aov(STAI_pre ~ Condition, data = full_data))
+
+ggplot(data = full_data, aes(x = Condition, y = STAI_pre)) +
+  geom_boxplot() +
+  theme_minimal()  
+
+nice_contrasts(response = "STAI_pre",
+               group = "Condition",
+               data = full_data)
+
+summary(aov(STAI_post ~ Condition, data = full_data))
+
+ggplot(data = full_data, aes(x = Condition, y = STAI_post)) +
+  geom_boxplot() +
+  theme_minimal()  
+
+nice_contrasts(response = "STAI_post",
+               group = "Condition",
+               data = full_data)
+
+
+summary(aov(Pre_Expectation ~ Condition, data = MC_data))
+summary(aov(Post_Expectation ~ Condition, data = MC_data))
 
   ggplot(data = full_data, aes(x = Condition, y = Post_Expectation)) +
     geom_boxplot() +
@@ -213,11 +242,8 @@ summary(aov(Post_Expectation ~ Condition, data = full_data))
   
   nice_contrasts(response = "Pre_Expectation",
                   group = "Condition",
-                  data = full_data
-                         )
+                  data = full_data)
   
-summary(aov(STAI_pre ~ Condition, data = full_data))
-summary(aov(STAI_post ~ Condition, data = full_data))
 
   ggplot(data = filter(full_data, STEMMajor =="STEM"), aes(x = Condition, y = Centrality)) +
     geom_boxplot() +
@@ -269,12 +295,61 @@ ggarrange(Centrality_condition, RIT_condition, STAI_condition,
 
 # Average difference by condition
 aggregate(Approach_diff ~ Condition, data = full_data, FUN = mean)
+aggregate(Avoidance_diff ~ Condition, data = full_data, FUN = mean)
+
 # Are the differences significant? 
 summary(aov(Approach_diff ~ Condition, data = full_data))  
 
-t.test(full_data$P_Approach, full_data$AGQ_approach, paired = TRUE)
-t.test(full_data$P_Avoidance, full_data$AGQ_avoidance, paired = TRUE)
-t.test(full_data$Racial_ID, full_data$Centrality, paired = TRUE)
+t.test(full_data$P_Approach, full_data$AGQ_approach, paired = TRUE) #significantly higher part 1
+t.test(full_data$P_Avoidance, full_data$AGQ_avoidance, paired = TRUE) #no diff
+t.test(full_data$Racial_ID, full_data$Centrality, paired = TRUE) #significantly higher part 1
+
+long_Approach <- full_data %>%
+  rename(Part1_Approach = P_Approach,
+         Part2_Approach = AGQ_approach) %>%
+  pivot_longer(cols = c(Part1_Approach, Part2_Approach), 
+               names_to = "Part", values_to = "Value")
+
+ggplot(long_Approach, aes(x = Condition, y = Value, fill = Part)) +
+  geom_boxplot() +
+  labs(title = "Performance Approach",
+       x = "Condition",
+       y = "Value",
+       fill = "Part") +
+  theme_minimal() +
+  guides(fill = guide_legend(title = NULL))
+
+long_Avoidance <- full_data %>%
+  rename(Part1_Avoidance = P_Avoidance,
+         Part2_Avoidance = AGQ_avoidance) %>%
+  pivot_longer(cols = c(Part1_Avoidance, Part2_Avoidance), 
+               names_to = "Part", values_to = "Value")
+
+ggplot(long_Avoidance, aes(x = Condition, y = Value, fill = Part)) +
+  geom_boxplot() +
+  labs(title = "Performance Avoidance",
+       x = "Condition",
+       y = "Value",
+       fill = "Part") +
+  theme_minimal() +
+  guides(fill = guide_legend(title = NULL))
+
+long_Centrality <- full_data %>%
+  rename(Part1_Centrality = Racial_ID,
+         Part2_Centrality = Centrality) %>%
+  pivot_longer(cols = c(Part1_Centrality, Part2_Centrality), 
+               names_to = "Part", values_to = "Value")
+
+ggplot(long_Centrality, aes(x = Condition, y = Value, fill = Part)) +
+  geom_boxplot() +
+  labs(title = "Racial Centrality",
+       x = "Condition",
+       y = "Value",
+       fill = "Part") +
+  theme_minimal() +
+  guides(fill = guide_legend(title = NULL))
+
+
 
 # Correlation function ----------------------------------------------------
 
@@ -379,7 +454,66 @@ correlations_data <- full_data |>
          STAI_pre, STAI_post)
 rquery.cormat(correlations_data)
 
-### SIGNIFICANT PREDICTORS
+library(xtable)
+correlations_data <- full_data |> 
+  select(Score, Approach = AGQ_approach, Avoidance = AGQ_avoidance,
+         RIT, Belonging, Centrality, 
+         Pre_Expectation, Post_Expectation, Math_ID,
+         STAI_pre, STAI_post)
+cor <- round(cor(correlations_data), 2)
+
+# cor matrix function -----------------------------------------------------
+library(Hmisc)
+corstars <-function(x, method=c("pearson", "spearman"), removeTriangle=c("upper", "lower"),
+                    result=c("none", "html", "latex")){
+  #Compute correlation matrix
+  require(Hmisc)
+  x <- as.matrix(x)
+  correlation_matrix<-rcorr(x, type=method[1])
+  R <- correlation_matrix$r # Matrix of correlation coeficients
+  p <- correlation_matrix$P # Matrix of p-value 
+  
+  ## Define notions for significance levels; spacing is important.
+  mystars <- ifelse(p < .0001, "****", ifelse(p < .001, "*** ", ifelse(p < .01, "**  ", ifelse(p < .05, "*   ", "    "))))
+  
+  ## trunctuate the correlation matrix to two decimal
+  R <- format(round(cbind(rep(-1.11, ncol(x)), R), 2))[,-1]
+  
+  ## build a new matrix that includes the correlations with their apropriate stars
+  Rnew <- matrix(paste(R, mystars, sep=""), ncol=ncol(x))
+  diag(Rnew) <- paste(diag(R), " ", sep="")
+  rownames(Rnew) <- colnames(x)
+  colnames(Rnew) <- paste(colnames(x), "", sep="")
+  
+  ## remove upper triangle of correlation matrix
+  if(removeTriangle[1]=="upper"){
+    Rnew <- as.matrix(Rnew)
+    Rnew[upper.tri(Rnew, diag = TRUE)] <- ""
+    Rnew <- as.data.frame(Rnew)
+  }
+  
+  ## remove lower triangle of correlation matrix
+  else if(removeTriangle[1]=="lower"){
+    Rnew <- as.matrix(Rnew)
+    Rnew[lower.tri(Rnew, diag = TRUE)] <- ""
+    Rnew <- as.data.frame(Rnew)
+  }
+  
+  ## remove last column and return the correlation matrix
+  Rnew <- cbind(Rnew[1:length(Rnew)-1])
+  if (result[1]=="none") return(Rnew)
+  else{
+    if(result[1]=="html") print(xtable(Rnew), type="html")
+    else print(xtable(Rnew), type="latex") 
+  }
+} 
+
+  
+cor_output <- corstars(correlations_data, result = "html")
+write(cor_output, file = "correlation_table.html")
+
+
+# Significant predictors --------------------------------------------------
 
 summary(lm(Score ~ Pre_Expectation, full_data))
 summary(lm(Score ~ Post_Expectation, full_data))
@@ -403,6 +537,7 @@ ggplot(data = full_data, aes(x = Math_ID)) +
 ggplot(data = full_data, aes(x = Pre_Expectation)) +
   geom_density()+
   geom_vline(aes(xintercept = mean(Pre_Expectation)), color = "red", linetype = "dashed", size = 1) 
+
 
 
 # Split the data ----------------------------------------------------------
