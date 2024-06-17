@@ -230,6 +230,8 @@ part2_data <- part2_avg |>
                 Post_Expectation, RIT, Belonging, Centrality, STAI_pre, STAI_post, 
                 Control_common, Control_true, Blatant_common, Blatant_true, Age,
                 mc_task, mc_mathability, mc_diagnostic,
+                task_stressful, Pressure, Comparison,
+                task_opinion, Math_abilities1, Math_abilities2,
                 ProlificID)
 
 # n = 239

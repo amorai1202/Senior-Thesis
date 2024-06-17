@@ -565,9 +565,6 @@ ggplot(data = full_data, aes(x = Condition, y = Centrality)) +
   theme_bw()
 
 full_data$Centrality_F <- ifelse(full_data$Centrality < 3.3, "Low", "High")
-full_data$Centrality_F <- ifelse(full_data$Centrality < 3.3, "Low", "High")
-full_data$Centrality_F <- ifelse(full_data$Centrality < 3.3, "Low", "High")
-
 
 low_Centrality <- subset(full_data, full_data$Centrality_F == "Low")
 high_Centrality <-subset(full_data, full_data$Centrality_F == "High")
@@ -592,6 +589,128 @@ ggplot(data = full_data, aes(x = Condition, y = AGQ_avoidance, fill = Centrality
 
 # And likely to adopt an avoidance
 t.test(low_Centrality$AGQ_avoidance, high_Centrality$AGQ_avoidance) 
+
+# Additional variables ----------------------------------------------------
+
+# I performed as well as I could on the task
+summary(full_data$Pressure)
+summary(aov(Pressure ~ Condition, data = full_data))
+
+ggplot(data = full_data, aes(x = Condition, y = Pressure)) +
+  geom_boxplot() +
+  theme_minimal()  
+
+ggplot(data = full_data, aes(x = Pressure, y = Score)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "lm", se = FALSE, color = "blue") +
+  theme_minimal()+
+  facet_wrap(~ Condition)
+
+crosstable(full_data, 
+           cols = c(Score, Pressure), 
+           by = Condition,
+           num_digits = 2,
+           showNA =  "no") |> 
+  as_flextable()
+
+# EXPECTATION
+# Do expectations differ by condition? No
+summary(aov(Pre_Expectation ~ Condition, data = full_data))
+ggplot(data = full_data, aes(x = Pre_Expectation, y = Score)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "lm", se = FALSE, color = "blue") +
+  theme_minimal()+
+  facet_wrap(~ Condition)
+summary(aov(Post_Expectation ~ Condition, data = full_data))
+ggplot(data = full_data, aes(x = Post_Expectation, y = Score)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "lm", se = FALSE, color = "blue") +
+  theme_minimal()+
+  facet_wrap(~ Condition)
+
+# Expectations independently lead to higher scores
+summary(lm(Score ~ Pre_Expectation, full_data)) #significant
+summary(lm(Score ~ Post_Expectation, full_data)) #significant + stronger
+
+# Significant interaction
+summary(aov(Score ~ Pre_Expectation*Condition, data = full_data))
+
+cor(full_data$Pre_Expectation, full_data$AGQ_approach)
+
+# MATH ID
+# Low math ID lead to lower scores? No
+summary(lm(Score ~ Math_ID, full_data)) 
+# Controlling for math ID - no diff
+summary(aov(Score ~ Condition + Math_ID, data = full_data))
+
+# Subset only those high in math ID
+
+full_data$Math_F <- ifelse(full_data$Math_ID < 4, "Low", "High")
+MC_data$MathF <- ifelse(MC_data$Math_ID < 4, "Low", "High")
+
+low_Math <- subset(full_data, full_data$Math_F == "Low")
+high_Math <-subset(full_data, full_data$Math_F == "High")
+
+summary(aov(Score ~ Condition, data = high_Math))
+t.test(low_Math$Score, high_Math$Score) 
+
+# No significant difference in scores between high and low math ID
+
+# Correlation with mindsets
+cor(full_data$Math_ID, full_data$AGQ_approach)
+cor(low_Math$Math_ID, low_Math$AGQ_approach)
+cor(high_Math$Math_ID, high_Math$AGQ_approach)
+
+# COMPARISON
+
+ggplot(data = full_data, aes(x = Comparison, y = Score)) +
+  geom_boxplot()
+
+crosstable(full_data, 
+           cols = c(Score, Comparison), 
+           by = Condition,
+           num_digits = 2,
+           showNA =  "no") |> 
+  as_flextable()
+
+crosstable(full_data, 
+           cols = c(Score, AGQ_approach, AGQ_avoidance, Pre_Expectation), 
+           by = Comparison,
+           num_digits = 2,
+           showNA =  "no") |> 
+  as_flextable()
+
+ggplot(data = full_data, aes(x = Comparison, y = AGQ_approach)) +
+  geom_boxplot()
+
+ggplot(data = full_data, aes(x = Comparison, y = AGQ_avoidance)) +
+  geom_boxplot()
+
+# MASTERY
+
+summary(aov(M_Approach ~ Condition, data = full_data))
+summary(aov(M_Avoidance ~ Condition, data = full_data))
+summary(lm(Score ~ M_Approach, data = full_data))
+summary(lm(Score ~ M_Avoidance, data = full_data))  
+
+ggplot(data = full_data, aes(x = Condition, y = M_Approach)) +
+  geom_boxplot() +
+  theme_minimal()  
+
+ggplot(data = full_data, aes(x = Condition, y = M_Avoidance)) +
+  geom_boxplot() +
+  theme_minimal() 
+
+# STRESS/OPINION
+crosstable(full_data, 
+           cols = c(Score, task_stressful, 
+                    task_opinion, Math_abilities1,
+                    Math_abilities2), 
+           by = Condition,
+           num_digits = 2,
+           showNA =  "no") |> 
+  as_flextable()
+
 
 # Extra -------------------------------------------------------------------
 
