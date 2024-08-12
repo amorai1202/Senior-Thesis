@@ -1,0 +1,50 @@
+"ProlificID","Duration (in seconds)","Gender","FirstGen","FirstGen_US","1st_immigrant","1st_age","2nd_immigrant","HighestDegree","Major","Minor","STEMMajor","GPA","M_Approach","M_Avoidance","P_Approach","P_Avoidance","Approach","Avoidance","Math_ID","Reading_ID","Racial_ID","Gender_ID"
+"6597691b6cf046f7396fcef4",178,"Man","Yes","No","No",NA,"Yes","Bachelor","Philosophy","Computer Science","STEM",3.13,5,5,2,1.667,3.5,3.333,4.5,4.833,1.667,2.667
+"667b4877702c70222418d02a",189,"Woman","Yes","Yes","No",NA,"Yes","HS/GED","Biomedical Engineering","Computer Science","STEM",4.73,3.333,2.667,2.667,2,3,2.333,4,4,3,3
+"665747ab06294778387cd708",168,"Man","No","Yes","Yes",0,NA,"HS/GED","Computer Science","none","STEM",4,3,2.667,4,4.333,3.5,3.5,2.833,2,3,4
+"66834121446f0105aa25f52f",214,"Man","No","Yes","Yes",4,NA,"Master","Applied Math, Data Science","Comptuer Science","STEM",4,3.667,2,4,4,3.833,3,3.667,3,4,4
+"668ffdcf805124c37c719cd7",187,"Woman","Yes","Yes","Yes",1,NA,"Associate","Nursing","N/A","STEM",3.8,4.667,4.333,4.667,4.333,4.667,4.333,2.167,4.5,1.667,4.333
+"667202328ae5a13b88528a04",208,"Man","Yes","Yes","Yes",5,NA,"Bachelor","Health Science","None","STEM",3.7,4.667,3.667,5,4.667,4.833,4.167,3.5,4.333,5,5
+"669536b088be12c14d73550d",326,"Man","No","Yes","Yes",2,NA,"HS/GED","CIT","N/A","STEM",3.35,3,2.667,2.333,1.333,2.667,2,3.667,4,1.333,1
+"668061765e0b5cf3645db29a",227,"Woman","Yes","Yes","No",NA,"Yes","HS/GED","B.S Biology","Chemistry","STEM",3.41,3.333,2.667,3.333,5,3.333,3.833,3.5,4.167,4.333,4.667
+"655ffefb7419ddfad7b18637",241,"Woman","Yes","Yes","Yes",14,NA,"Bachelor","Nursing","none","Not STEM",3.6,4,3.333,4,3.667,4,3.5,3.5,3.833,4,4
+"628e3b1df14fee48e3b118b8",178,"Man","No","No","No",NA,"Yes","HS/GED","Computer Science","Computer Science","STEM",3.6,4.667,4.667,5,4.667,4.833,4.667,3.667,3.833,5,4.333
+"667c48d6b75218dcfcb0b93b",248,"Woman","Yes","Yes","No",NA,"Yes","HS/GED","Computer Science","None","STEM",4,4,4,4,4,4,4,4.667,1.5,2.667,4
+"6694523bfdccd108ee220a9a",377,"Woman","Yes","Yes","Yes",8,NA,"Bachelor","Actuarial Science & Chemistry","N/A","STEM",3.78,5,4.333,4,4.333,4.5,4.333,4.5,2.667,5,5
+"66709bdd875264ed57d1d15b",333,"Woman","No","Yes","No",NA,"Yes","HS/GED","Art","N/A","Not STEM",3.7,2.667,2.333,3,3.667,2.833,3,3.167,2.833,2.667,3
+"6630f10a3f5ea2fb9b5afb71",307,"Woman","Yes","Yes","Yes",2,NA,"Doctorate","biology","n/A","STEM",3.98,5,3.667,5,5,5,4.333,4.833,4.667,3.667,2.667
+"6671a8d34477782bfebe4c2c",471,"Man","No","Yes","Yes",3,NA,"Bachelor","aerospace engineering","math","STEM",3.9,3.333,3,3,3.667,3.167,3.333,4,2.333,3.667,2.333
+"669880ad0f9fd495627e6741",264,"Man","Yes","No","No",NA,"No","HS/GED","Finance","n/a","Not STEM",4,3.333,2.667,5,5,4.167,3.833,3.667,4.5,3,4
+"665fcf1dd1d2c73b73d9dd95",364,"Woman","Yes","Yes","No",NA,"Yes","Bachelor","Bachelors in Biology & Business Administration and now in Medical School","Chemistry","STEM",3.5,4.667,3,3,3,3.833,3,3.167,3.667,3.333,3
+"65cfe535447c871ebe57c939",171,"Woman","Yes","No","No",NA,"Yes","HS/GED","Human Development and Public Relations","N/A","Not STEM",3.65,4,3,3.667,3.333,3.833,3.167,2,4.333,5,5
+"664a16dadcc9b3525dd04be1",388,"Woman","Yes","Yes","No",NA,"Yes","Bachelor","Statistics & Educational Psychology","N/A","STEM",3.8,3.333,2.667,1,3,2.167,2.833,2.5,3.333,2.667,3.667
+"6691f9c5388807909bf65db4",199,"Man","No","No","Yes",2,NA,"Bachelor","Computer Engineering","None","STEM",3.37,3.667,2.667,3,3.667,3.333,3.167,2.333,3.5,2.333,3
+"60b76ee2219ac1ce25ccea43",240,"Man","No","Yes","No",NA,"Yes","Bachelor","Biology BA","None","STEM",3.2,4,2,2.333,1.333,3.167,1.667,3.833,4.167,3,2
+"6670695ddda879e28629fbe0",249,"Woman","No","No","Yes",10,NA,"Bachelor","psychology","n/a","Not STEM",3.6,3.667,4,4,4.333,3.833,4.167,3.5,3.5,5,4.333
+"6648bfa5ae62e331540910e4",284,"Man","Yes","Yes","No",NA,"Yes","Bachelor","Chemistry","None","STEM",3.5,3.333,2,3,2.667,3.167,2.333,3.667,3.667,3,2.333
+"65e780d536102c253b9fe5f7",233,"Woman","Yes","Yes","Yes",0,NA,"Bachelor","Information Decision Sciences","N/A","STEM",3.49,3.667,4,4,4.333,3.833,4.167,4.333,3.5,4.333,4
+"66315878b38cea3df40eb797",492,"Man","Yes","No","Yes",0,NA,"HS/GED","computer programming","computer science","STEM",2.88,3.667,4,3,4,3.333,4,3,3.167,2,2.333
+"664662d0e586193a0ca4267e",289,"Man","No","No","No",NA,"Yes","HS/GED","psychology","N/A","STEM",3.1,4.667,2,4,2.667,4.333,2.333,2.5,4.167,4.333,3.333
+"66572731cb06ce43c72bdf8a",340,"Woman","No","Yes","Yes",3,NA,"HS/GED","Computer Science","Engineering Management","STEM",3.78,4,4,5,5,4.5,4.5,4,3.833,4.667,5
+"65d594b4198b2fcc568946bd",249,"Woman","No","Yes","Yes",0,NA,"HS/GED","Public Health","N/A","Not STEM",4,4.667,2.333,4.333,4,4.5,3.167,3.667,3.167,2.667,2.667
+"667d08e12ac1bcbdd829a936",176,"Woman","Yes","No","No",NA,"No","HS/GED","Psychology","Industrial and organizational psychology","STEM",4,4,3.333,4,4,4,3.667,2.167,3.833,4,3.667
+"667de4a44b72be8e8cf6ab6a",212,"Woman","Yes","Yes","No",NA,"Yes","Associate","Animation","Animation","Not STEM",3.4,5,5,5,5,5,5,3.667,2.833,5,5
+"5e9e19d808b9931ef37373c6",162,"Man","Yes","Yes","Yes",2,NA,"Bachelor","Mechanical Engineering","N/A","STEM",3.95,4,3,4.333,2.667,4.167,2.833,4,2.5,3,3.333
+"6659d847c1e1823897fc8414",296,"Man","Yes","Yes","No",NA,"Yes","HS/GED","Computer Science","Mathematics","STEM",3.48,4,2.667,3,2,3.5,2.333,4.167,2.5,4.333,2.333
+"666da112c907f5585554cc51",170,"Woman","Yes","No","Yes",NA,NA,"HS/GED","Economics","Data Science","STEM",4,4,4,4,4,4,4,3.5,3.5,3.333,4
+"66970cf3abd2bff3e5f602d9",210,"Man","Yes","No","No",NA,"Yes","Bachelor","Computer science, Mathematics","Economics","STEM",3.03,3.333,3.333,3.333,3.333,3.333,3.333,4,3.833,1.333,1
+"665771f4457c84106353a94f",276,"Woman","Yes","No","No",NA,"Yes","HS/GED","Animal Science, concentration of pre-veterinary/pre-medical","N/A","STEM",2.9,4,2.667,3.333,3,3.667,2.833,4.5,2.833,4,3
+"66550501336446c73dbbb0cf",329,"Man","No","No","No",NA,"Yes","Associate","Microbiology","N/A","STEM",3.4,3,2.667,2.667,2.667,2.833,2.667,2.667,3.833,2.333,2.667
+"668edf4cd6b065f71b6e7f09",199,"Man","Yes","No","No",NA,"Yes","HS/GED","Computer Science","n/a","STEM",3.89,5,5,3,3.667,4,4.333,4.333,4.333,2.333,2
+"6664e08a4c893385b08c5cde",283,"Woman","Yes","Yes","No",NA,"Yes","HS/GED","Psychology","N/A","Not STEM",3.95,5,5,5,5,5,5,4.333,3.167,2.667,4.667
+"6686f3a1254c3edb7c71eb65",228,"Man","Yes","No","No",NA,"Yes","HS/GED","Aerospace Engineering","None","STEM",3.69,4.333,4.667,5,5,4.667,4.833,4.333,2.5,3,4
+"6630ee41c60c303b0b51fd22",158,"Man","Yes","Yes","Yes",2,NA,"Bachelor","Mechanical Engineering","n/a","STEM",3.5,4.333,2.333,3,4.667,3.667,3.5,5,3.167,1.333,1
+"667c178be91e30ed5781df45",168,"Man","Yes","Yes","Yes",0,NA,"Bachelor","psych","none","STEM",3.27,3.667,3,4,3,3.833,3,4,4.167,3.333,3.667
+"61097b89fdedf0995d90b6c7",215,"Woman","No","No","Yes",0,NA,"Bachelor","Psychology","Applied Psychology","Not STEM",3.3,2.667,2.333,3.333,4.333,3,3.333,2.167,3.167,4,3
+"65a4333efc75f965e7fc0cb5",318,"Man","Yes","No","No",NA,"Yes","HS/GED","Inteligient Systems Engineering","n/a","STEM",3.85,3.667,3.333,4,3.667,3.833,3.5,4.667,3.5,4,3
+"664770af0e8f4c4cc2b8a6e8",322,"Man","No","Yes","Yes",1,NA,"Bachelor","Bioengineering","N/A","STEM",3.1,3,1,4,2.333,3.5,1.667,3,3.833,3.667,3
+"66623b50ab69ef83a0d8b6c4",171,"Man","Yes","No","Yes",18,NA,"HS/GED","International Studies","Middle East Studies","Not STEM",3.87,4,3,2,1,3,2,2.333,4.833,2.667,1.667
+"60fd02b7f22f9dd32bff5f82",358,"Woman","Yes","Yes","No",NA,"Yes","Bachelor","English, Neuroscience","N/A","STEM",3.75,4.333,3.333,5,5,4.667,4.167,4,5,4.333,5
+"660982bb12941e7442c18325",510,"Man","No","No","No",NA,"Yes","HS/GED","I am planning to major in something tech related.","N/A","Not STEM",2.7,2.667,2.667,2,2,2.333,2.333,1.833,2.333,1.333,1.667
+"66539dad5602a670c7bdfb15",313,"Woman","Yes","No","No",NA,"Yes","HS/GED","Music Performance","History","Not STEM",3.8,4,4.333,4,4,4,4.167,2,5,4,3.667
+"66977349fca27ef8b010e60f",239,"Non-binary","No","Yes","Yes",3,NA,"HS/GED","Nursing","n/a","Not STEM",0,4,3.333,3.667,3,3.833,3.167,2.333,4.167,5,2.333

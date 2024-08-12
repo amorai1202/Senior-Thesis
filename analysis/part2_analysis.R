@@ -32,6 +32,21 @@ table(MC_data$Condition)
 # Are there any scores 3sd away from mean? NO
 #full_data$Score[abs(full_data$Score - mean(full_data$Score)) > 3 * sd(full_data$Score)]
 
+# Check for outliers in duration
+#duration_outliers <- which(abs(full_data$`Duration (in seconds)` - mean(full_data$`Duration (in seconds)`)) > 3 * sd(full_data$`Duration (in seconds)`))
+
+
+full_data$`Duration (in seconds)`
+
+ggplot(data = full_data, aes(x = `Duration (in seconds)`, y = Score)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "lm", se = FALSE, color = "blue") +
+  theme_minimal()+
+  facet_wrap(~ Condition)
+
+summary(lm(Score ~ `Duration (in seconds)`, data = full_data))  
+
+
 # EDA ---------------------------------------------------------------------
 
 # Conditions
@@ -222,6 +237,17 @@ nice_contrasts(response = "STAI_pre",
                group = "Condition",
                data = full_data)
 
+crosstable(full_data, 
+           cols = c(Score, STAI_pre, Math_abilities1, Math_abilities2,
+                    task_opinion,
+                    Pressure), 
+           by = Condition,
+           num_digits = 2,
+           showNA =  "no") |> 
+  as_flextable()
+
+summary(aov(Math_abilities1 ~ Condition, data = full_data))
+
 summary(aov(STAI_post ~ Condition, data = full_data))
 
 ggplot(data = full_data, aes(x = Condition, y = STAI_post)) +
@@ -231,7 +257,6 @@ ggplot(data = full_data, aes(x = Condition, y = STAI_post)) +
 nice_contrasts(response = "STAI_post",
                group = "Condition",
                data = full_data)
-
 
 summary(aov(Pre_Expectation ~ Condition, data = MC_data))
 summary(aov(Post_Expectation ~ Condition, data = MC_data))
@@ -607,7 +632,7 @@ ggplot(data = full_data, aes(x = Pressure, y = Score)) +
   facet_wrap(~ Condition)
 
 crosstable(full_data, 
-           cols = c(Score, Pressure), 
+           cols = c(Score, Pressure, Pre_Expectation), 
            by = Condition,
            num_digits = 2,
            showNA =  "no") |> 
@@ -633,9 +658,11 @@ summary(lm(Score ~ Pre_Expectation, full_data)) #significant
 summary(lm(Score ~ Post_Expectation, full_data)) #significant + stronger
 
 # Significant interaction
-summary(aov(Score ~ Pre_Expectation*Condition, data = full_data))
+# effect of pre-test expectation on score depends on the condition
+summary(aov(STAI_pre ~ Condition, data = full_data))
 
 cor(full_data$Pre_Expectation, full_data$AGQ_approach)
+
 
 # MATH ID
 # Low math ID lead to lower scores? No
@@ -792,11 +819,7 @@ summary(lm(Score ~ AGQ_avoidance+ Pre_Expectation, data = full_data))
                          data = full_data)
   summary(centrality_model)
   
-  
 
-  
-  
-  
   
   
 
